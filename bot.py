@@ -231,7 +231,7 @@ def handle_menu(message):
             bot.send_message(message.chat.id, "Ҳисоби шумо ҳоло холӣ аст.")
             
     elif "Тамос" in text:
-        bot.send_message(message.chat.id, "📞 Барои тамос:\n\nТелефон: +992 XX XXX XX XX\nTelegram: @flstyle_admin")
+        bot.send_message(message.chat.id, "📞 Барои тамос:\n\nТелефон: +992 02-332-19-19\nTelegram: @Rustamzoda6789")
 
 # Дастури махсус барои илова кардани фурӯш
 @bot.message_handler(commands=['add_sale'])
