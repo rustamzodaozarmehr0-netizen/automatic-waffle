@@ -12,14 +12,23 @@ VALID_CODES = {
     "93712": "girl",
     "73920": "boy",
     "58203": "boy",
-    "58921": "girl",
-    "93912": "girl",
-    "74920": "boy",
-    "57203": "boy",
-    "58421": "girl",
-    "90412": "girl",
-    "72120": "boy",
-    "19191": "boy"
+    "54112": "girl",
+    "93111": "girl",
+    "73113": "boy",
+    "58114": "boy",
+    "54115": "girl",
+    "93116": "girl",
+    "10020": "boy",
+    "83703": "boy",
+    "50021": "girl",
+    "22122": "girl",
+    "10101": "boy",
+    "63846": "boy",
+    "44543": "girl",
+    "2077": "girl",
+    "6777": "boy",
+    "63947": "boy"
+    
 }
 
 bot = telebot.TeleBot(TOKEN)
@@ -32,12 +41,21 @@ def init_db():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS sellers (
             user_id INTEGER PRIMARY KEY,
-            name TEXT,
-            phone TEXT,
-            gender TEXT,
+            name TEXT, phone TEXT, gender TEXT,
             total_sales INTEGER DEFAULT 0,
             total_orders INTEGER DEFAULT 0,
             total_earned REAL DEFAULT 0.0
+        )
+    ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            category TEXT,
+            name TEXT,
+            photo_id TEXT,
+            price_stock TEXT,
+            price_4_7 TEXT,
+            price_15_22 TEXT
         )
     ''')
     conn.commit()
@@ -64,115 +82,185 @@ def get_name(message):
 def get_phone(message):
     user_states[message.chat.id]['phone'] = message.text
     user_states[message.chat.id]['state'] = 'waiting_code'
-    
     name = user_states[message.chat.id]['name']
     phone = user_states[message.chat.id]['phone']
-    
-    admin_msg = f"🛍️ ДАРХОСТИ НАВ!\n\n👤 Ном: {name}\n📱 Рақам: {phone}\n\nБарои қабул, ба ӯ яке аз кодҳоро диҳед."
     try:
-        bot.send_message(ADMIN_ID, admin_msg)
+        bot.send_message(ADMIN_ID, f"🛍️ ДАРХОСТИ НАВ!\n\n👤 Ном: {name}\n📱 Рақам: {phone}")
     except Exception as e:
         print(f"Хато: {e}")
-        
-    bot.send_message(message.chat.id, "Ташаккур! Дархост қабул шуд. Интизор шавед, ба зудӣ код мегиред.\n\nЛутфан, коди худро ворид кунед:")
+    bot.send_message(message.chat.id, "Ташаккур! Дархост қабул шуд.\n\nЛутфан, коди худро ворид кунед:")
 
 def show_main_menu(chat_id, gender):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    
     if gender == "girl":
-        btn1 = types.KeyboardButton("👗 Либосҳои занона")
-        btn2 = types.KeyboardButton("👟 Пойафзоли занона")
-        btn3 = types.KeyboardButton("👜 Сумкаҳо")
-        btn4 = types.KeyboardButton("💄 Косметика")
+        markup.add(types.KeyboardButton("👗 Либосҳои занона"), types.KeyboardButton("👟 Пойафзоли занона"),
+                   types.KeyboardButton("👜 Сумкаҳо"), types.KeyboardButton("💄 Косметика"))
     else:
-        btn1 = types.KeyboardButton("👕 Либосҳои мардона")
-        btn2 = types.KeyboardButton("👞 Пойафзоли мардона")
-        btn3 = types.KeyboardButton("🎒 Сумкаҳо")
-        btn4 = types.KeyboardButton("🧴 Дигар чизҳо")
-        
-    btn_med = types.KeyboardButton("🌿 Табиӣ ва Дору")
-    btn_stats = types.KeyboardButton("📊 Ҳисоби ман")
-    btn_rating = types.KeyboardButton("🏆 Рейтинг")
-    btn_contact = types.KeyboardButton("📞 Тамос бо мо")
-    
-    markup.add(btn1, btn2, btn3, btn4, btn_med, btn_stats, btn_rating, btn_contact)
+        markup.add(types.KeyboardButton("👕 Либосҳои мардона"), types.KeyboardButton("👞 Пойафзоли мардона"),
+                   types.KeyboardButton("🎒 Сумкаҳо"), types.KeyboardButton("🧴 Дигар чизҳо"))
+    markup.add(types.KeyboardButton("🌿 Табиӣ ва Дору"), types.KeyboardButton("📊 Ҳисоби ман"),
+               types.KeyboardButton("🏆 Рейтинг"), types.KeyboardButton("📞 Тамос бо мо"))
     bot.send_message(chat_id, "🏠 Менюи асосӣ\n\nЛутфан, аз меню интихоб кунед:", reply_markup=markup)
 
 @bot.message_handler(func=lambda message: user_states.get(message.chat.id, {}).get('state') == 'waiting_code')
 def check_code(message):
     entered_code = message.text.strip()
-    
     if entered_code in VALID_CODES:
         gender = VALID_CODES[entered_code]
         name = user_states[message.chat.id]['name']
         phone = user_states[message.chat.id]['phone']
-        
         user_states[message.chat.id]['state'] = 'authorized'
         user_states[message.chat.id]['gender'] = gender
-        
         conn = sqlite3.connect('shop.db')
         cursor = conn.cursor()
         cursor.execute('INSERT OR IGNORE INTO sellers (user_id, name, phone, gender) VALUES (?, ?, ?, ?)', 
                        (message.chat.id, name, phone, gender))
         conn.commit()
         conn.close()
-        
         bot.send_message(message.chat.id, "✅ Код қабул шуд! Хуш омадед.")
         show_main_menu(message.chat.id, gender)
     else:
-        bot.send_message(message.chat.id, "❌ Код хато аст ё вуҷуд надорад! Аз нав кӯшиш кунед.")
+        bot.send_message(message.chat.id, "❌ Код хато аст! Аз нав кӯшиш кунед.")
 
-PRODUCTS = {
-    "👕 Либосҳои мардона": {
-        "name": "Куртаи зебои мардона",
-        "photo": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-        "prices": {"stock": "150", "4_7": "180", "15_22": "130"}
-    },
-    "👗 Либосҳои занона": {
-        "name": "Куртаи зебои занона",
-        "photo": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-        "prices": {"stock": "200", "4_7": "230", "15_22": "180"}
-    }
-}
+# ============ ПАНЕЛИ АДМИН ============
+@bot.message_handler(commands=['admin'])
+def admin_panel(message):
+    if str(message.chat.id) != ADMIN_ID:
+        return
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    markup.add(types.KeyboardButton("➕ Иловаи моли нав"), types.KeyboardButton("📋 Рӯйхати молҳо"))
+    markup.add(types.KeyboardButton("🗑 Нест кардани мол"), types.KeyboardButton("⬅️ Бозгашт"))
+    bot.send_message(message.chat.id, "👑 ПАНЕЛИ АДМИН\n\nЛутфан, амалро интихоб кунед:", reply_markup=markup)
 
+@bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "➕ Иловаи моли нав")
+def add_product_start(message):
+    user_states[message.chat.id] = {'state': 'admin_photo'}
+    bot.send_message(message.chat.id, "📸 Лутфан, акси молро фиристед:")
+
+@bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_photo', content_types=['photo'])
+def add_product_photo(message):
+    user_states[message.chat.id]['photo_id'] = message.photo[-1].file_id
+    user_states[message.chat.id]['state'] = 'admin_category'
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    markup.add("👕 Либосҳои мардона", "👗 Либосҳои занона", "👞 Пойафзоли мардона", "👟 Пойафзоли занона", "👜 Сумкаҳо", "💄 Косметика", "🌿 Табиӣ ва Дору", "🧴 Дигар чизҳо")
+    bot.send_message(message.chat.id, "📁 Ба кадом бахш илова кунем?", reply_markup=markup)
+
+@bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_category')
+def add_product_category(message):
+    user_states[message.chat.id]['category'] = message.text
+    user_states[message.chat.id]['state'] = 'admin_name'
+    bot.send_message(message.chat.id, "📝 Номи молро нависед:")
+
+@bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_name')
+def add_product_name(message):
+    user_states[message.chat.id]['name'] = message.text
+    user_states[message.chat.id]['state'] = 'admin_price_stock'
+    bot.send_message(message.chat.id, "💵 Нархи Наличи (Тайёр) бо сомонӣ:")
+
+@bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_price_stock')
+def add_product_price_stock(message):
+    user_states[message.chat.id]['price_stock'] = message.text
+    user_states[message.chat.id]['state'] = 'admin_price_4_7'
+    bot.send_message(message.chat.id, "💵 Нархи Под заказ (4-7 рӯз):")
+
+@bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_price_4_7')
+def add_product_price_4_7(message):
+    user_states[message.chat.id]['price_4_7'] = message.text
+    user_states[message.chat.id]['state'] = 'admin_price_15_22'
+    bot.send_message(message.chat.id, "💵 Нархи Под заказ (15-22 рӯз):")
+
+@bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_price_15_22')
+def add_product_price_15_22(message):
+    user_states[message.chat.id]['price_15_22'] = message.text
+    d = user_states[message.chat.id]
+    conn = sqlite3.connect('shop.db')
+    cursor = conn.cursor()
+    cursor.execute('''INSERT INTO products (category, name, photo_id, price_stock, price_4_7, price_15_22) 
+                      VALUES (?, ?, ?, ?, ?, ?)''',
+                   (d['category'], d['name'], d['photo_id'], d['price_stock'], d['price_4_7'], d['price_15_22']))
+    conn.commit()
+    conn.close()
+    bot.send_message(message.chat.id, f"✅ Моли «{d['name']}» ба бахши «{d['category']}» илова шуд!")
+    user_states[message.chat.id]['state'] = 'authorized'
+
+@bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "📋 Рӯйхати молҳо")
+def list_products(message):
+    conn = sqlite3.connect('shop.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, category, name, price_stock FROM products')
+    rows = cursor.fetchall()
+    conn.close()
+    if not rows:
+        bot.send_message(message.chat.id, "Ҳоло молҳо нест.")
+        return
+    text = "📋 <b>Рӯйхати молҳо:</b>\n\n"
+    for r in rows:
+        text += f"#{r[0]} | {r[1]} | {r[2]} | {r[3]}с\n"
+    bot.send_message(message.chat.id, text, parse_mode='HTML')
+
+@bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "🗑 Нест кардани мол")
+def delete_product_prompt(message):
+    bot.send_message(message.chat.id, "Рақами молро нависед (мисол: 1):")
+    user_states[message.chat.id] = {'state': 'admin_delete'}
+
+@bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_delete')
+def delete_product(message):
+    try:
+        pid = int(message.text)
+        conn = sqlite3.connect('shop.db')
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM products WHERE id = ?', (pid,))
+        conn.commit()
+        conn.close()
+        bot.send_message(message.chat.id, f"✅ Моли #{pid} нест карда шуд.")
+    except:
+        bot.send_message(message.chat.id, "Хато. Рақамро нависед.")
+    user_states[message.chat.id]['state'] = 'authorized'
+
+@bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "⬅️ Бозгашт")
+def back_to_menu(message):
+    user_states[message.chat.id]['state'] = 'authorized'
+    show_main_menu(message.chat.id, "boy")
+
+# ============ КОРКАРДИ МОЛҲО ============
 @bot.message_handler(func=lambda message: user_states.get(message.chat.id, {}).get('state') == 'authorized')
 def handle_menu(message):
     text = message.text
     
-    if text in PRODUCTS:
-        product = PRODUCTS[text]
-        markup = types.InlineKeyboardMarkup(row_width=1)
+    if "Сумкаҳо" in text or "Косметика" in text or "Дигар" in text or "Табиӣ" in text or "Либос" in text or "Пойафзол" in text:
+        conn = sqlite3.connect('shop.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT id, name, photo_id, price_stock FROM products WHERE category = ?', (text,))
+        products = cursor.fetchall()
+        conn.close()
         
-        markup.add(
-            types.InlineKeyboardButton(f"🟢 Наличи (Тайёр) - {product['prices']['stock']}с", callback_data=f"order_{text}_stock"),
-            types.InlineKeyboardButton(f"🟡 Под заказ (4-7 рӯз) - {product['prices']['4_7']}с", callback_data=f"order_{text}_4_7"),
-            types.InlineKeyboardButton(f"🔴 Под заказ (15-22 рӯз) - {product['prices']['15_22']}с", callback_data=f"order_{text}_15_22")
-        )
+        if not products:
+            bot.send_message(message.chat.id, "🌿 Дар ин бахш ҳоло молҳо нест. Ба зудӣ илова мешаванд.")
+            return
         
-        try:
-            bot.send_photo(message.chat.id, product['photo'], caption=f"📦 <b>{product['name']}</b>\n\nЛутфан, ҳолати молро интихоб кунед:", reply_markup=markup, parse_mode='HTML')
-        except Exception as e:
-            print(f"Хато дар фиристодани акс: {e}")
-            bot.send_message(message.chat.id, f"📦 <b>{product['name']}</b>\n\n(Акс ҳоло дастрас нест)\n\nЛутфан, ҳолати молро интихоб кунед:", reply_markup=markup, parse_mode='HTML')
-        
-    elif "Сумкаҳо" in text or "Косметика" in text or "Дигар" in text or "Табиӣ" in text:
-        bot.send_message(message.chat.id, "🌿 Ин бахш ҳоло дар ҳоли омодагӣ аст. Ба зудӣ молҳо илова мешаванд.")
+        for p in products:
+            pid, pname, photo_id, price = p
+            markup = types.InlineKeyboardMarkup(row_width=1)
+            markup.add(
+                types.InlineKeyboardButton(f"🟢 Наличи - {price}с", callback_data=f"order_{pid}_stock"),
+                types.InlineKeyboardButton(f"🟡 4-7 рӯз", callback_data=f"order_{pid}_4_7"),
+                types.InlineKeyboardButton(f"🔴 15-22 рӯз", callback_data=f"order_{pid}_15_22")
+            )
+            bot.send_photo(message.chat.id, photo_id, caption=f"📦 <b>{pname}</b>", reply_markup=markup, parse_mode='HTML')
         
     elif "Рейтинг" in text:
         conn = sqlite3.connect('shop.db')
         cursor = conn.cursor()
         cursor.execute('SELECT name, total_sales FROM sellers ORDER BY total_sales DESC LIMIT 5')
-        top_sellers = cursor.fetchall()
+        top = cursor.fetchall()
         conn.close()
-        
-        if top_sellers:
-            text_rating = "🏆 <b>ТОП-5 ФУРӮШАНДАГОНИ МО</b> 🏆\n➖➖➖➖➖➖➖➖➖➖\n"
-            for i, (name, sales) in enumerate(top_sellers, 1):
-                text_rating += f"{i}. <b>{name}</b> — {sales} фурӯш\n"
-            text_rating += "➖➖➖➖➖➖➖➖➖➖\n<i>Барои ба ҷои аввал баромадан бештар фурӯшед!</i>"
-            bot.send_message(message.chat.id, text_rating, parse_mode='HTML')
+        if top:
+            t = "🏆 <b>ТОП-5 ФУРӮШАНДАГОН</b>\n\n"
+            for i, (n, s) in enumerate(top, 1):
+                t += f"{i}. <b>{n}</b> — {s} фурӯш\n"
+            bot.send_message(message.chat.id, t, parse_mode='HTML')
         else:
-            bot.send_message(message.chat.id, "Ҳоло рейтинг холӣ аст.")
+            bot.send_message(message.chat.id, "Рейтинг холӣ аст.")
         
     elif "Ҳисоби ман" in text:
         conn = sqlite3.connect('shop.db')
@@ -180,105 +268,68 @@ def handle_menu(message):
         cursor.execute('SELECT total_orders, total_sales, total_earned, name FROM sellers WHERE user_id = ?', (message.chat.id,))
         row = cursor.fetchone()
         conn.close()
-        
         if row:
-            orders, sales, earned, name = row
-            if earned >= 1000:
-                rank = "🥇 Тилоӣ (VIP)"
-            elif earned >= 500:
-                rank = "🥈 Нуқраӣ (Pro)"
-            else:
-                rank = "🥉 Биринҷӣ (Start)"
-                
-            stats_text = (
-                f"👑 <b>КАБИНЕТИ ФУРӮШАНДА</b> 👑\n"
-                f"➖➖➖➖➖➖➖➖➖➖\n"
-                f"👤 Фурӯшанда: <b>{name}</b>\n"
-                f"🏆 Рутбаи шумо: <b>{rank}</b>\n"
-                f"➖➖➖➖➖➖➖➖➖➖\n"
-                f"📦 Фармоишҳои қабулшуда: <b>{orders}</b>\n"
-                f"🛍 Молҳои фурӯхташуда: <b>{sales} дона</b>\n"
-                f"💰 Маблағи коркарда: <b>{earned} сомонӣ</b>\n"
-                f"➖➖➖➖➖➖➖➖➖➖\n"
-                f"<i>Барои баланд бардоштани рутба бештар фурӯш кунед!</i>"
-            )
-            bot.send_message(message.chat.id, stats_text, parse_mode='HTML')
+            o, s, e, n = row
+            rank = "🥇 Тилоӣ" if e >= 1000 else "🥈 Нуқраӣ" if e >= 500 else "🥉 Биринҷӣ"
+            bot.send_message(message.chat.id, 
+                f"👑 <b>КАБИНЕТИ ФУРӮШАНДА</b>\n➖➖➖➖➖\n👤 {n}\n🏆 {rank}\n📦 Фармоиш: {o}\n🛍 Фурӯш: {s}\n💰 Комиссия: {e}с", 
+                parse_mode='HTML')
         else:
-            bot.send_message(message.chat.id, "Ҳисоби шумо ҳоло холӣ аст.")
+            bot.send_message(message.chat.id, "Ҳисоб холӣ аст.")
             
     elif "Тамос" in text:
-        bot.send_message(message.chat.id, "📞 Барои тамос:\n\nТелефон: +992 02-332-19-19\nTelegram: @Rustamzoda6789")
+        bot.send_message(message.chat.id, "📞 Телефон: +992 02-332-19-19\nTelegram: @Rustamzoda6789")
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('order_'))
 def handle_order_type(call):
-    _, product_category, order_type = call.data.split('_', 2)
-    product = PRODUCTS[product_category]
+    _, pid, otype = call.data.split('_', 2)
+    conn = sqlite3.connect('shop.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT name, price_stock, price_4_7, price_15_22 FROM products WHERE id = ?', (pid,))
+    p = cursor.fetchone()
+    conn.close()
     
-    if order_type == 'stock':
-        type_text = "🟢 Наличи (Тайёр)"
-        price = product['prices']['stock']
-    elif order_type == '4_7':
-        type_text = "🟡 Под заказ (4-7 рӯз)"
-        price = product['prices']['4_7']
+    if not p:
+        bot.answer_callback_query(call.id, "Мол нест карда шуд!")
+        return
+    
+    if otype == 'stock':
+        ttext, price = "🟢 Наличи (Тайёр)", p[1]
+    elif otype == '4_7':
+        ttext, price = "🟡 4-7 рӯз", p[2]
     else:
-        type_text = "🔴 Под заказ (15-22 рӯз)"
-        price = product['prices']['15_22']
-        
-    user_states[call.message.chat.id] = {
-        'state': 'waiting_order_details',
-        'product': product['name'],
-        'order_type': type_text,
-        'price': price
-    }
+        ttext, price = "🔴 15-22 рӯз", p[3]
     
-    bot.send_message(call.message.chat.id, f"📦 Мол: {product['name']}\n📋 Ҳолат: {type_text}\n💵 Нарх: {price} сомонӣ\n\nЛутфан, ранг, андоза ва миқдорро нависед (мисол: Сиёҳ, L, 2 дона):")
+    user_states[call.message.chat.id] = {'state': 'waiting_order_details', 'product': p[0], 'order_type': ttext, 'price': price}
+    bot.send_message(call.message.chat.id, f"📦 {p[0]}\n📋 {ttext}\n💵 {price}с\n\nРанг, андоза, миқдорро нависед:")
     bot.answer_callback_query(call.id)
 
 @bot.message_handler(func=lambda message: user_states.get(message.chat.id, {}).get('state') == 'waiting_order_details')
 def handle_order_details(message):
-    details = message.text
-    product = user_states[message.chat.id]['product']
-    order_type = user_states[message.chat.id]['order_type']
-    price = user_states[message.chat.id]['price']
-    
-    admin_msg = (
-        f"🛍️ <b>ФАРМОИШИ НАВ!</b>\n\n"
-        f"👤 Фурӯшанда: {message.from_user.first_name} (ID: {message.chat.id})\n"
-        f"📦 Мол: {product}\n"
-        f"📋 Ҳолат: {order_type}\n"
-        f"💵 Нархи фурӯш: {price} сомонӣ\n"
-        f"🎨 Ранг/Андоза/Миқдор: {details}"
-    )
+    d = user_states[message.chat.id]
     try:
-        bot.send_message(ADMIN_ID, admin_msg, parse_mode='HTML')
-        bot.send_message(message.chat.id, "✅ Фармоиши шумо ба админ равон карда шуд. Ба зудӣ бо шумо тамос мегиранд.")
-    except Exception as e:
-        bot.send_message(message.chat.id, "Хато дар фиристодан. Аз нав кӯшиш кунед.")
-        
-    user_states[message.chat.id]['state'] = 'authorized' 
+        bot.send_message(ADMIN_ID, 
+            f"🛍️ <b>ФАРМОИШИ НАВ!</b>\n\n👤 {message.from_user.first_name} (ID: {message.chat.id})\n📦 {d['product']}\n📋 {d['order_type']}\n💵 {d['price']}с\n🎨 {message.text}",
+            parse_mode='HTML')
+        bot.send_message(message.chat.id, "✅ Фармоиш ба админ равон шуд!")
+    except:
+        bot.send_message(message.chat.id, "Хато. Аз нав кӯшиш кунед.")
+    d['state'] = 'authorized'
 
 @bot.message_handler(commands=['add_sale'])
 def admin_add_sale(message):
     if str(message.chat.id) == ADMIN_ID:
         try:
             args = message.text.split()
-            seller_id = int(args[1])
-            commission = float(args[2]) 
-            
+            sid, comm = int(args[1]), float(args[2])
             conn = sqlite3.connect('shop.db')
             cursor = conn.cursor()
-            cursor.execute('''
-                UPDATE sellers 
-                SET total_orders = total_orders + 1, 
-                    total_sales = total_sales + 1, 
-                    total_earned = total_earned + ? 
-                WHERE user_id = ?
-            ''', (commission, seller_id))
+            cursor.execute('UPDATE sellers SET total_orders = total_orders + 1, total_sales = total_sales + 1, total_earned = total_earned + ? WHERE user_id = ?', (comm, sid))
             conn.commit()
             conn.close()
-            bot.reply_to(message, f"✅ Фурӯш барои корбар {seller_id} сабт шуд. Комиссия: {commission} сомонӣ.")
-        except Exception as e:
-            bot.reply_to(message, f"Хато. Намунаи дуруст:\n`/add_sale 123456789 50`", parse_mode='Markdown')
+            bot.reply_to(message, f"✅ Фурӯш барои {sid} сабт шуд. Комиссия: {comm}с")
+        except:
+            bot.reply_to(message, "Хато. Мисол: /add_sale 123456789 50")
 
 def run_bot():
     bot.polling(none_stop=True)
