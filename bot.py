@@ -8,27 +8,27 @@ TOKEN = '8944741788:AAE27y2JQD4NZrQN20e1YSe7pjAeikpthG4'
 ADMIN_ID = '6367413561' # ID-и худатро нависед!
 
 VALID_CODES = {
-    "54821": "girl",
-    "93712": "girl",
-    "73920": "boy",
-    "58203": "boy",
-    "54112": "girl",
-    "93111": "girl",
-    "73113": "boy",
-    "58114": "boy",
-    "54115": "girl",
-    "93116": "girl",
-    "10020": "boy",
-    "83703": "boy",
-    "50021": "girl",
-    "22122": "girl",
-    "10101": "boy",
-    "63846": "boy",
-    "44543": "girl",
-    "2077": "girl",
-    "6777": "boy",
-    "63947": "boy"
-    
+    "548271": "girl",
+    "939712": "girl",
+    "548283": "girl"
+‎    "73920": "boy",
+‎    "58203": "boy",
+‎    "54112": "girl",
+‎    "93111": "girl",
+‎    "73113": "boy",
+‎    "58114": "boy",
+‎    "54115": "girl",
+‎    "93116": "girl",
+‎    "10020": "boy",
+‎    "83703": "boy",
+‎    "50021": "girl",
+‎    "22122": "girl",
+‎    "10101": "boy",
+‎    "63846": "boy",
+‎    "44543": "girl",
+‎    "2077": "girl",
+‎    "6777": "boy",
+‎    "63947": "boy"
 }
 
 bot = telebot.TeleBot(TOKEN)
@@ -123,7 +123,7 @@ def check_code(message):
         bot.send_message(message.chat.id, "❌ Код хато аст! Аз нав кӯшиш кунед.")
 
 # ============ ПАНЕЛИ АДМИН ============
-@bot.message_handler(commands=['admin'])
+@bot.message_handler(commands=['admin', '+'])
 def admin_panel(message):
     if str(message.chat.id) != ADMIN_ID:
         return
@@ -135,7 +135,7 @@ def admin_panel(message):
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "➕ Иловаи моли нав")
 def add_product_start(message):
     user_states[message.chat.id] = {'state': 'admin_photo'}
-    bot.send_message(message.chat.id, "📸 Лутфан, акси молро фиристед:")
+    bot.send_message(message.chat.id, "📸 Лутфан, акси молро фиристед (танҳо як акс):")
 
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_photo', content_types=['photo'])
 def add_product_photo(message):
@@ -149,7 +149,7 @@ def add_product_photo(message):
 def add_product_category(message):
     user_states[message.chat.id]['category'] = message.text
     user_states[message.chat.id]['state'] = 'admin_name'
-    bot.send_message(message.chat.id, "📝 Номи молро нависед:")
+    bot.send_message(message.chat.id, "📝 Номи молро нависед (танҳо ном, на нарх):")
 
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_name')
 def add_product_name(message):
@@ -182,6 +182,7 @@ def add_product_price_15_22(message):
     conn.close()
     bot.send_message(message.chat.id, f"✅ Моли «{d['name']}» ба бахши «{d['category']}» илова шуд!")
     user_states[message.chat.id]['state'] = 'authorized'
+    admin_panel(message) # Баргашт ба менюи админ
 
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "📋 Рӯйхати молҳо")
 def list_products(message):
@@ -216,11 +217,13 @@ def delete_product(message):
     except:
         bot.send_message(message.chat.id, "Хато. Рақамро нависед.")
     user_states[message.chat.id]['state'] = 'authorized'
+    admin_panel(message)
 
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "⬅️ Бозгашт")
 def back_to_menu(message):
     user_states[message.chat.id]['state'] = 'authorized'
-    show_main_menu(message.chat.id, "boy")
+    gender = user_states.get(message.chat.id, {}).get('gender', 'boy')
+    show_main_menu(message.chat.id, gender)
 
 # ============ КОРКАРДИ МОЛҲО ============
 @bot.message_handler(func=lambda message: user_states.get(message.chat.id, {}).get('state') == 'authorized')
@@ -246,7 +249,13 @@ def handle_menu(message):
                 types.InlineKeyboardButton(f"🟡 4-7 рӯз", callback_data=f"order_{pid}_4_7"),
                 types.InlineKeyboardButton(f"🔴 15-22 рӯз", callback_data=f"order_{pid}_15_22")
             )
-            bot.send_photo(message.chat.id, photo_id, caption=f"📦 <b>{pname}</b>", reply_markup=markup, parse_mode='HTML')
+            try:
+                # Қоидаи бехатарӣ: кӯшиши фиристодани акс
+                bot.send_photo(message.chat.id, photo_id, caption=f"📦 <b>{pname}</b>", reply_markup=markup, parse_mode='HTML')
+            except Exception as e:
+                # Агар акс хато диҳад, танҳо матнро мефиристад
+                print(f"Хато дар акс: {e}")
+                bot.send_message(message.chat.id, f"📦 <b>{pname}</b>\n💵 Нархи Наличи: {price}с\n\n(Акс ҳозир дастрас нест, аммо шумо метавонед фармоиш диҳед)", reply_markup=markup, parse_mode='HTML')
         
     elif "Рейтинг" in text:
         conn = sqlite3.connect('shop.db')
