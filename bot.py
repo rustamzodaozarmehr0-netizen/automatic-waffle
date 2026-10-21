@@ -165,15 +165,17 @@ def handle_menu(message):
     markup = types.InlineKeyboardMarkup(row_width=1)
     
     # Тугмаҳои инлайн барои ҳолати мол
-    if "Либосҳои мардона" in text or "Либосҳои занона" in text or "Пойафзол" in text:
-        # Барои намуна, мо танҳо як молро нишон медиҳем
-        product_name = "Куртаи зебо"
-        markup.add(
-            types.InlineKeyboardButton("🟢 Наличи (Тайёр) - 150с", callback_data=f"order_{product_name}_stock"),
-            types.InlineKeyboardButton("🟡 Под заказ (4-7 рӯз) - 180с", callback_data=f"order_{product_name}_4_7"),
-            types.InlineKeyboardButton("🔴 Под заказ (15-22 рӯз) - 130с", callback_data=f"order_{product_name}_15_22")
-        )
-        bot.send_message(message.chat.id, f"👕 {product_name}\n\nЛутфан, ҳолати молро интихоб кунед:", reply_markup=markup)
+    if text in PRODUCTS:
+    product = PRODUCTS[text]
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    
+    markup.add(
+        types.InlineKeyboardButton(f"🟢 Наличи (Тайёр) - {product['prices']['stock']}с", callback_data=f"order_{text}_stock"),
+        types.InlineKeyboardButton(f"🟡 Под заказ (4-7 рӯз) - {product['prices']['4_7']}с", callback_data=f"order_{text}_4_7"),
+        types.InlineKeyboardButton(f"🔴 Под заказ (15-22 рӯз) - {product['prices']['15_22']}с", callback_data=f"order_{text}_15_22")
+    )
+    
+    bot.send_photo(message.chat.id, product['photo'], caption=f"📦 <b>{product['name']}</b>\n\nЛутфан, ҳолати молро интихоб кунед:", reply_markup=markup, parse_mode='HTML')
         
     elif "Сумкаҳо" in text:
         bot.send_message(message.chat.id, "🎒 Сумкаҳо\n\n(Дар ин ҷо аксҳо ва нархҳо илова мешаванд)")
