@@ -47,14 +47,14 @@ def init_db():
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            category TEXT,
-            name TEXT,
-            photo_id TEXT,
-            price_stock TEXT,
-            price_4_7 TEXT,
-            price_15_22 TEXT
+            category TEXT, name TEXT, photo_id TEXT,
+            price_stock TEXT, price_4_7 TEXT, price_15_22 TEXT
         )
     ''')
+    try:
+        cursor.execute('ALTER TABLE products ADD COLUMN description TEXT')
+    except:
+        pass
     conn.commit()
     conn.close()
 
@@ -189,9 +189,15 @@ def add_product_category(message):
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_name')
 def add_product_name(message):
     user_states[message.chat.id]['name'] = message.text
-    user_states[message.chat.id]['state'] = 'admin_price_stock'
-    bot.send_message(message.chat.id, "💵 Нархи Наличи (Тайёр) бо сомонӣ:")
+    user_states[message.chat.id]['state'] = 'admin_description'
+    bot.send_message(message.chat.id, "📄 Тавсифи молро нависед (барои чӣ, таркиб, чӣ тавр истифода мешавад):")
+    @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_description')
 
+    def add_product_description(message):
+    user_states[message.chat.id]['description'] = message.text
+    user_states[message.chat.id]['state'] = 'admin_price_stock'
+    bot.send_message(message.chat.id, "💵 Нархи Наличи (Тайёр) бо сомонӣ (ё `-` агар нест):")
+    
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_price_stock')
 def add_product_price_stock(message):
     user_states[message.chat.id]['price_stock'] = message.text
@@ -357,7 +363,7 @@ def view_product(call):
     pid = call.data.split('_')[1]
     conn = sqlite3.connect('shop.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT name, photo_id, price_stock, price_4_7, price_15_22 FROM products WHERE id = ?', (pid,))
+    cursor.execute('SELECT name, photo_id, price_stock, price_4_7, price_15_22, description FROM products WHERE id = ?', (pid,))
     p = cursor.fetchone()
     conn.close()
     
@@ -365,20 +371,24 @@ def view_product(call):
         bot.answer_callback_query(call.id, "Мол нест карда шуд!")
         return
         
-    pname, photo_id, p_stock, p_4_7, p_15_22 = p
-markup = types.InlineKeyboardMarkup(row_width=1)
+    pname, photo_id, p_stock, p_4_7, p_15_22, p_desc = p
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    
+    if p_stock and p_stock != '-':
+        markup.add(types.InlineKeyboardButton(f"🟢 Наличи - {p_stock}с", callback_data=f"order_{pid}_stock"))
+    if p_4_7 and p_4_7 != '-':
+        markup.add(types.InlineKeyboardButton(f"🟡 4-7 рӯз - {p_4_7}с", callback_data=f"order_{pid}_4_7"))
+    if p_15_22 and p_15_22 != '-':
+        markup.add(types.InlineKeyboardButton(f"🔴 15-22 рӯз - {p_15_22}с", callback_data=f"order_{pid}_15_22"))
 
-if p_stock and p_stock != '-':
-    markup.add(types.InlineKeyboardButton(f"🟢 Наличи - {p_stock}с", callback_data=f"order_{pid}_stock"))
-if p_4_7 and p_4_7 != '-':
-    markup.add(types.InlineKeyboardButton(f"🟡 4-7 рӯз - {p_4_7}с", callback_data=f"order_{pid}_4_7"))
-if p_15_22 and p_15_22 != '-':
-    markup.add(types.InlineKeyboardButton(f"🔴 15-22 рӯз - {p_15_22}с", callback_data=f"order_{pid}_15_22"))
+    caption = f"📦 <b>{pname}</b>"
+    if p_desc and p_desc != '-':
+        caption += f"\n\n📝 {p_desc}"
+    
     try:
-        bot.send_photo(call.message.chat.id, photo_id, caption=f"📦 <b>{pname}</b>", reply_markup=markup, parse_mode='HTML')
+        bot.send_photo(call.message.chat.id, photo_id, caption=caption, reply_markup=markup, parse_mode='HTML')
     except Exception as e:
-        print(f"Хато дар акс: {e}")
-        bot.send_message(call.message.chat.id, f"📦 <b>{pname}</b>\n\n(Акс ҳозир дастрас нест)", reply_markup=markup, parse_mode='HTML')
+        bot.send_message(call.message.chat.id, caption + "\n\n(Акс ҳозир дастрас нест)", reply_markup=markup, parse_mode='HTML')
     
     bot.answer_callback_query(call.id)
 
