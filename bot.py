@@ -366,12 +366,14 @@ def view_product(call):
         return
         
     pname, photo_id, p_stock, p_4_7, p_15_22 = p
-    markup = types.InlineKeyboardMarkup(row_width=1)
-    markup.add(
-        types.InlineKeyboardButton(f"🟢 Наличи - {p_stock}с", callback_data=f"order_{pid}_stock"),
-        types.InlineKeyboardButton(f"🟡 4-7 рӯз - {p_4_7}с", callback_data=f"order_{pid}_4_7"),
-        types.InlineKeyboardButton(f"🔴 15-22 рӯз - {p_15_22}с", callback_data=f"order_{pid}_15_22")
-    )
+markup = types.InlineKeyboardMarkup(row_width=1)
+
+if p_stock and p_stock != '-':
+    markup.add(types.InlineKeyboardButton(f"🟢 Наличи - {p_stock}с", callback_data=f"order_{pid}_stock"))
+if p_4_7 and p_4_7 != '-':
+    markup.add(types.InlineKeyboardButton(f"🟡 4-7 рӯз - {p_4_7}с", callback_data=f"order_{pid}_4_7"))
+if p_15_22 and p_15_22 != '-':
+    markup.add(types.InlineKeyboardButton(f"🔴 15-22 рӯз - {p_15_22}с", callback_data=f"order_{pid}_15_22"))
     try:
         bot.send_photo(call.message.chat.id, photo_id, caption=f"📦 <b>{pname}</b>", reply_markup=markup, parse_mode='HTML')
     except Exception as e:
