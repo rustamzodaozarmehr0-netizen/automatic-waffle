@@ -6,8 +6,8 @@ import sqlite3
 
 TOKEN = '8944741788:AAE27y2JQD4NZrQN20e1YSe7pjAeikpthG4'
 ADMIN_ID = '6367413561' # ID-и худатро нависед!
-  
-‎VALID_CODES = {
+
+VALID_CODES = {
     # 👗 Кодҳои духтарон
     "49182": "girl",
     "73719": "girl",
@@ -142,15 +142,12 @@ def admin_seller_report(message):
     cursor.execute('SELECT name, phone, total_sales, total_earned FROM sellers')
     sellers = cursor.fetchall()
     conn.close()
-    
     if not sellers:
         bot.send_message(message.chat.id, "Ҳоло фурӯшандагон нест.")
         return
-        
     report_text = "📊 <b>ҲИСОБОТИ ҲАМАИ ФУРӮШАНДАГОН</b>\n➖➖➖➖➖➖➖➖➖➖\n"
     for s in sellers:
         report_text += f"👤 <b>{s[0]}</b> ({s[1]})\n🛍 Фурӯш: {s[2]} дона\n💰 Комиссия: {s[3]} сомонӣ\n➖➖➖➖➖➖➖➖➖➖\n"
-    
     bot.send_message(message.chat.id, report_text, parse_mode='HTML')
 
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "🏆 Топ-фурӯшандагон")
@@ -160,7 +157,6 @@ def admin_top_sellers(message):
     cursor.execute('SELECT name, total_sales FROM sellers ORDER BY total_sales DESC LIMIT 5')
     top = cursor.fetchall()
     conn.close()
-    
     if top:
         t = "🏆 <b>ТОП-5 ФУРӮШАНДАГОНИ МАҒОЗА</b>\n➖➖➖➖➖➖➖➖➖➖\n"
         for i, (n, s) in enumerate(top, 1):
@@ -220,7 +216,7 @@ def add_product_price_15_22(message):
     conn.close()
     bot.send_message(message.chat.id, f"✅ Моли «{d['name']}» ба бахши «{d['category']}» илова шуд!")
     user_states[message.chat.id]['state'] = 'authorized'
-    admin_panel(message) # Баргашт ба менюи админ
+    admin_panel(message)
 
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "📋 Рӯйхати молҳо")
 def list_products(message):
