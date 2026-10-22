@@ -6,29 +6,31 @@ import sqlite3
 
 TOKEN = '8944741788:AAE27y2JQD4NZrQN20e1YSe7pjAeikpthG4'
 ADMIN_ID = '6367413561' # ID-и худатро нависед!
+  
+‎VALID_CODES = {
+    # 👗 Кодҳои духтарон
+    "49182": "girl",
+    "73719": "girl",
+    "28405": "girl",
+    "91837": "girl",
+    "56204": "girl",
+    "10593": "girl",
+    "84621": "girl",
+    "37048": "girl",
+    "62915": "girl",
+    "05732": "girl",
 
-VALID_CODES = {
-    "548271": "girl",
-    "939712": "girl",
-    "548283": "girl"
-‎    "73920": "boy",
-‎    "58203": "boy",
-‎    "54112": "girl",
-‎    "93111": "girl",
-‎    "73113": "boy",
-‎    "58114": "boy",
-‎    "54115": "girl",
-‎    "93116": "girl",
-‎    "10020": "boy",
-‎    "83703": "boy",
-‎    "50021": "girl",
-‎    "22122": "girl",
-‎    "10101": "boy",
-‎    "63846": "boy",
-‎    "44543": "girl",
-‎    "2077": "girl",
-‎    "6777": "boy",
-‎    "63947": "boy"
+    # 👕 Кодҳои писарон
+    "81924": "boy",
+    "37405": "boy",
+    "92058": "boy",
+    "16539": "boy",
+    "74812": "boy",
+    "50396": "boy",
+    "28147": "boy",
+    "65930": "boy",
+    "41785": "boy",
+    "09624": "boy"
 }
 
 bot = telebot.TeleBot(TOKEN)
@@ -123,14 +125,50 @@ def check_code(message):
         bot.send_message(message.chat.id, "❌ Код хато аст! Аз нав кӯшиш кунед.")
 
 # ============ ПАНЕЛИ АДМИН ============
-@bot.message_handler(commands=['admin', '+'])
+@bot.message_handler(commands=['admin'])
 def admin_panel(message):
     if str(message.chat.id) != ADMIN_ID:
         return
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     markup.add(types.KeyboardButton("➕ Иловаи моли нав"), types.KeyboardButton("📋 Рӯйхати молҳо"))
-    markup.add(types.KeyboardButton("🗑 Нест кардани мол"), types.KeyboardButton("⬅️ Бозгашт"))
+    markup.add(types.KeyboardButton("📊 Ҳисоботи фурӯшандагон"), types.KeyboardButton("🏆 Топ-фурӯшандагон"))
+    markup.add(types.KeyboardButton("🗑 Нест кардани мол"), types.KeyboardButton("⬅️ Бозгашт ба меню"))
     bot.send_message(message.chat.id, "👑 ПАНЕЛИ АДМИН\n\nЛутфан, амалро интихоб кунед:", reply_markup=markup)
+
+@bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "📊 Ҳисоботи фурӯшандагон")
+def admin_seller_report(message):
+    conn = sqlite3.connect('shop.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT name, phone, total_sales, total_earned FROM sellers')
+    sellers = cursor.fetchall()
+    conn.close()
+    
+    if not sellers:
+        bot.send_message(message.chat.id, "Ҳоло фурӯшандагон нест.")
+        return
+        
+    report_text = "📊 <b>ҲИСОБОТИ ҲАМАИ ФУРӮШАНДАГОН</b>\n➖➖➖➖➖➖➖➖➖➖\n"
+    for s in sellers:
+        report_text += f"👤 <b>{s[0]}</b> ({s[1]})\n🛍 Фурӯш: {s[2]} дона\n💰 Комиссия: {s[3]} сомонӣ\n➖➖➖➖➖➖➖➖➖➖\n"
+    
+    bot.send_message(message.chat.id, report_text, parse_mode='HTML')
+
+@bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "🏆 Топ-фурӯшандагон")
+def admin_top_sellers(message):
+    conn = sqlite3.connect('shop.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT name, total_sales FROM sellers ORDER BY total_sales DESC LIMIT 5')
+    top = cursor.fetchall()
+    conn.close()
+    
+    if top:
+        t = "🏆 <b>ТОП-5 ФУРӮШАНДАГОНИ МАҒОЗА</b>\n➖➖➖➖➖➖➖➖➖➖\n"
+        for i, (n, s) in enumerate(top, 1):
+            t += f"{i}. <b>{n}</b> — {s} фурӯш\n"
+        t += "➖➖➖➖➖➖➖➖➖➖"
+        bot.send_message(message.chat.id, t, parse_mode='HTML')
+    else:
+        bot.send_message(message.chat.id, "Рейтинг холӣ аст.")
 
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "➕ Иловаи моли нав")
 def add_product_start(message):
@@ -219,8 +257,8 @@ def delete_product(message):
     user_states[message.chat.id]['state'] = 'authorized'
     admin_panel(message)
 
-@bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "⬅️ Бозгашт")
-def back_to_menu(message):
+@bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "⬅️ Бозгашт ба меню")
+def back_to_menu_admin(message):
     user_states[message.chat.id]['state'] = 'authorized'
     gender = user_states.get(message.chat.id, {}).get('gender', 'boy')
     show_main_menu(message.chat.id, gender)
@@ -250,10 +288,8 @@ def handle_menu(message):
                 types.InlineKeyboardButton(f"🔴 15-22 рӯз", callback_data=f"order_{pid}_15_22")
             )
             try:
-                # Қоидаи бехатарӣ: кӯшиши фиристодани акс
                 bot.send_photo(message.chat.id, photo_id, caption=f"📦 <b>{pname}</b>", reply_markup=markup, parse_mode='HTML')
             except Exception as e:
-                # Агар акс хато диҳад, танҳо матнро мефиристад
                 print(f"Хато дар акс: {e}")
                 bot.send_message(message.chat.id, f"📦 <b>{pname}</b>\n💵 Нархи Наличи: {price}с\n\n(Акс ҳозир дастрас нест, аммо шумо метавонед фармоиш диҳед)", reply_markup=markup, parse_mode='HTML')
         
