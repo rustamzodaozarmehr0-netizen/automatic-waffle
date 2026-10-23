@@ -5,24 +5,18 @@ from telebot import types
 import sqlite3
 import os
 
-# ТОКЕН ВА ID-И ХУДРО ИН ҶО ГУЗОР
 TOKEN = '8944741788:AAGGSOQ7tpkeX8uJ-7-6pl_11imx_xgvr5w'
-ADMIN_ID = '6367413561' # ID-и худатро нависед!
+ADMIN_ID = '6367413561' 
 
 VALID_CODES = {
-    # 👗 Кодҳои духтарон (5 рақама)
     "49182": "girl", "73719": "girl", "28405": "girl", "91837": "girl", "56204": "girl",
     "10593": "girl", "84621": "girl", "37048": "girl", "62915": "girl", "05732": "girl",
     "29483": "girl", "61824": "girl", "75039": "girl", "18347": "girl", "50264": "girl",
     "93821": "girl", "46715": "girl", "82940": "girl", "31576": "girl", "60482": "girl",
-
-    # 👕 Кодҳои писарон (5 рақама)
     "81924": "boy", "37405": "boy", "92058": "boy", "16539": "boy", "74812": "boy",
     "50396": "boy", "28147": "boy", "65930": "boy", "41785": "boy", "09624": "boy",
     "73582": "boy", "14906": "boy", "86231": "boy", "40875": "boy", "59123": "boy",
     "27648": "boy", "95310": "boy", "68427": "boy", "32059": "boy", "81746": "boy",
-
-    # 🌟 Кодҳои махсус - Ҳар ду бахш (6 рақама)
     "849201": "all", "375912": "all", "620485": "all", "193746": "all", "758204": "all", "412869": "all"
 }
 
@@ -94,7 +88,7 @@ def show_main_menu(chat_id, gender):
     elif gender == "boy":
         markup.add(types.KeyboardButton("👕 Либосҳои мардона"), types.KeyboardButton("👞 Пойафзоли мардона"),
                    types.KeyboardButton("🎒 Сумкаҳо"), types.KeyboardButton("🧴 Дигар чизҳо"))
-    else: # "all" (Ҳар ду бахш)
+    else:
         markup.add(types.KeyboardButton("👗 Либосҳои занона"), types.KeyboardButton("👕 Либосҳои мардона"))
         markup.add(types.KeyboardButton("👟 Пойафзоли занона"), types.KeyboardButton("👞 Пойафзоли мардона"))
         markup.add(types.KeyboardButton("👜 Сумкаҳо"), types.KeyboardButton("💄 Косметика"), types.KeyboardButton("🧴 Дигар чизҳо"))
@@ -323,9 +317,7 @@ def handle_menu(message):
         if row:
             o, s, e, n = row
             rank = "🥇 Тилоӣ" if e >= 1000 else "🥈 Нуқраӣ" if e >= 500 else "🥉 Биринҷӣ"
-            bot.send_message(message.chat.id, 
-                f"👑 <b>КАБИНЕТИ ФУРӮШАНДА</b>\n➖➖➖➖➖\n👤 {n}\n🏆 {rank}\n📦 Фармоиш: {o}\n🛍 Фурӯш: {s}\n💰 Комиссия: {e}с", 
-                parse_mode='HTML')
+            bot.send_message(message.chat.id, f"👑 <b>КАБИНЕТИ ФУРӮШАНДА</b>\n➖➖➖➖➖\n👤 {n}\n🏆 {rank}\n📦 Фармоиш: {o}\n🛍 Фурӯш: {s}\n💰 Комиссия: {e}с", parse_mode='HTML')
         else:
             bot.send_message(message.chat.id, "Ҳисоб холӣ аст.")
     elif "Тамос" in text:
@@ -405,7 +397,33 @@ def handle_order_type(call):
 def handle_order_details(message):
     d = user_states[message.chat.id]
     try:
-        bot.send_message(ADMIN_ID, 
-            f"🛍️ <b>ФАРМОИШИ НАВ!</b>\n\n👤 {message.from_user.first_name} (ID: {message.chat.id})\n📦 {d['product']}\n📋 {d['order_type']}\n💵 {d['price']}с\n🎨 {message.text}",
-            parse_mode='HTML')
-        bot.send_message(message
+        bot.send_message(ADMIN_ID, f"🛍️ <b>ФАРМОИШИ НАВ!</b>\n\n👤 {message.from_user.first_name} (ID: {message.chat.id})\n📦 {d['product']}\n📋 {d['order_type']}\n💵 {d['price']}с\n🎨 {message.text}", parse_mode='HTML')
+        bot.send_message(message.chat.id, "✅ Фармоиш ба админ равон шуд!")
+    except:
+        bot.send_message(message.chat.id, "Хато. Аз нав кӯшиш кунед.")
+    d['state'] = 'authorized'
+
+@bot.message_handler(commands=['add_sale'])
+def admin_add_sale(message):
+    if str(message.chat.id) == ADMIN_ID:
+            try:
+            args = message.text.split()
+            sid, comm = int(args[1]), float(args[2])
+            conn = sqlite3.connect('shop.db')
+            cursor = conn.cursor()
+            cursor.execute('UPDATE sellers SET total_orders = total_orders + 1, total_sales = total_sales + 1, total_earned = total_earned + ? WHERE user_id = ?', (comm, sid))
+            conn.commit()
+            conn.close()
+            bot.reply_to(message, f"✅ Фурӯш барои {sid} сабт шуд. Комиссия: {comm}с")
+        except:
+            bot.reply_to(message, "Хато. Мисол: /add_sale 123456789 50")
+
+def run_bot():
+    bot.polling(none_stop=True)
+
+if __name__ == '__main__':
+    t = Thread(target=run_bot)
+    t.start()
+    # ИСЛОҲИ ХАТОИ RENDER: Истифодаи бандари тасодуфӣ
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
