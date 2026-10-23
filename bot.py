@@ -117,7 +117,6 @@ def check_code(message):
     else:
         bot.send_message(message.chat.id, "❌ Код хато аст! Аз нав кӯшиш кунед.")
 
-# ============ ПАНЕЛИ АДМИН ============
 @bot.message_handler(commands=['admin'])
 def admin_panel(message):
     if str(message.chat.id) != ADMIN_ID:
@@ -258,11 +257,9 @@ def back_to_menu_admin(message):
     gender = user_states.get(message.chat.id, {}).get('gender', 'boy')
     show_main_menu(message.chat.id, gender)
 
-# ============ КОРКАРДИ МОЛҲО ============
 def show_products_page(chat_id, category, page):
     items_per_page = 5
     offset = (page - 1) * items_per_page
-    
     conn = sqlite3.connect('shop.db')
     cursor = conn.cursor()
     cursor.execute('SELECT COUNT(*) FROM products WHERE category = ?', (category,))
@@ -343,30 +340,24 @@ def view_product(call):
     cursor.execute('SELECT name, photo_id, price_stock, price_4_7, price_15_22, description FROM products WHERE id = ?', (pid,))
     p = cursor.fetchone()
     conn.close()
-    
     if not p:
         bot.answer_callback_query(call.id, "Мол нест карда шуд!")
         return
-        
     pname, photo_id, p_stock, p_4_7, p_15_22, p_desc = p
     markup = types.InlineKeyboardMarkup(row_width=1)
-    
     if p_stock and p_stock != '-':
         markup.add(types.InlineKeyboardButton(f"🟢 Наличи - {p_stock}с", callback_data=f"order_{pid}_stock"))
     if p_4_7 and p_4_7 != '-':
         markup.add(types.InlineKeyboardButton(f"🟡 4-7 рӯз - {p_4_7}с", callback_data=f"order_{pid}_4_7"))
     if p_15_22 and p_15_22 != '-':
         markup.add(types.InlineKeyboardButton(f"🔴 15-22 рӯз - {p_15_22}с", callback_data=f"order_{pid}_15_22"))
-
     caption = f"📦 <b>{pname}</b>"
     if p_desc and p_desc != '-':
         caption += f"\n\n📝 {p_desc}"
-    
     try:
         bot.send_photo(call.message.chat.id, photo_id, caption=caption, reply_markup=markup, parse_mode='HTML')
     except Exception as e:
         bot.send_message(call.message.chat.id, caption + "\n\n(Акс ҳозир дастрас нест)", reply_markup=markup, parse_mode='HTML')
-    
     bot.answer_callback_query(call.id)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('order_'))
@@ -377,18 +368,15 @@ def handle_order_type(call):
     cursor.execute('SELECT name, price_stock, price_4_7, price_15_22 FROM products WHERE id = ?', (pid,))
     p = cursor.fetchone()
     conn.close()
-    
     if not p:
         bot.answer_callback_query(call.id, "Мол нест карда шуд!")
         return
-    
     if otype == 'stock':
         ttext, price = "🟢 Наличи (Тайёр)", p[1]
     elif otype == '4_7':
         ttext, price = "🟡 4-7 рӯз", p[2]
     else:
         ttext, price = "🔴 15-22 рӯз", p[3]
-    
     user_states[call.message.chat.id] = {'state': 'waiting_order_details', 'product': p[0], 'order_type': ttext, 'price': price}
     bot.send_message(call.message.chat.id, f"📦 {p[0]}\n📋 {ttext}\n💵 {price}с\n\nРанг, андоза, миқдорро нависед:")
     bot.answer_callback_query(call.id)
@@ -402,11 +390,10 @@ def handle_order_details(message):
     except:
         bot.send_message(message.chat.id, "Хато. Аз нав кӯшиш кунед.")
     d['state'] = 'authorized'
-
-@bot.message_handler(commands=['add_sale'])
+    @bot.message_handler(commands=['add_sale'])
 def admin_add_sale(message):
     if str(message.chat.id) == ADMIN_ID:
-            try:
+        try:
             args = message.text.split()
             sid, comm = int(args[1]), float(args[2])
             conn = sqlite3.connect('shop.db')
@@ -424,6 +411,5 @@ def run_bot():
 if __name__ == '__main__':
     t = Thread(target=run_bot)
     t.start()
-    # ИСЛОҲИ ХАТОИ RENDER: Истифодаи бандари тасодуфӣ
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
