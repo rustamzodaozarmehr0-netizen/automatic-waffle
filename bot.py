@@ -81,20 +81,15 @@ def get_phone(message):
 
 def show_main_menu(chat_id, gender):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    
     if gender == "girl":
-        markup.add(types.KeyboardButton("👗 Либосҳои занона"), types.KeyboardButton("👟 Пойафзоли занона"),
-                   types.KeyboardButton("👜 Сумкаҳо"), types.KeyboardButton("💄 Косметика"))
+        markup.add(types.KeyboardButton("👗 Либосҳои занона"), types.KeyboardButton("👟 Пойафзоли занона"), types.KeyboardButton("👜 Сумкаҳо"), types.KeyboardButton("💄 Косметика"))
     elif gender == "boy":
-        markup.add(types.KeyboardButton("👕 Либосҳои мардона"), types.KeyboardButton("👞 Пойафзоли мардона"),
-                   types.KeyboardButton("🎒 Сумкаҳо"), types.KeyboardButton("🧴 Дигар чизҳо"))
+        markup.add(types.KeyboardButton("👕 Либосҳои мардона"), types.KeyboardButton("👞 Пойафзоли мардона"), types.KeyboardButton("🎒 Сумкаҳо"), types.KeyboardButton("🧴 Дигар чизҳо"))
     else:
         markup.add(types.KeyboardButton("👗 Либосҳои занона"), types.KeyboardButton("👕 Либосҳои мардона"))
         markup.add(types.KeyboardButton("👟 Пойафзоли занона"), types.KeyboardButton("👞 Пойафзоли мардона"))
         markup.add(types.KeyboardButton("👜 Сумкаҳо"), types.KeyboardButton("💄 Косметика"), types.KeyboardButton("🧴 Дигар чизҳо"))
-        
-    markup.add(types.KeyboardButton("🌿 Табиӣ ва Дору"), types.KeyboardButton("📊 Ҳисоби ман"),
-               types.KeyboardButton("🏆 Рейтинг"), types.KeyboardButton("📞 Тамос бо мо"))
+    markup.add(types.KeyboardButton("🌿 Табиӣ ва Дору"), types.KeyboardButton("📊 Ҳисоби ман"), types.KeyboardButton("🏆 Рейтинг"), types.KeyboardButton("📞 Тамос бо мо"))
     bot.send_message(chat_id, "🏠 Менюи асосӣ\n\nЛутфан, аз меню интихоб кунед:", reply_markup=markup)
 
 @bot.message_handler(func=lambda message: user_states.get(message.chat.id, {}).get('state') == 'waiting_code')
@@ -108,8 +103,7 @@ def check_code(message):
         user_states[message.chat.id]['gender'] = gender
         conn = sqlite3.connect('shop.db')
         cursor = conn.cursor()
-        cursor.execute('INSERT OR IGNORE INTO sellers (user_id, name, phone, gender) VALUES (?, ?, ?, ?)', 
-                       (message.chat.id, name, phone, gender))
+        cursor.execute('INSERT OR IGNORE INTO sellers (user_id, name, phone, gender) VALUES (?, ?, ?, ?)', (message.chat.id, name, phone, gender))
         conn.commit()
         conn.close()
         bot.send_message(message.chat.id, "✅ Код қабул шуд! Хуш омадед.")
@@ -207,9 +201,7 @@ def add_product_price_15_22(message):
     d = user_states[message.chat.id]
     conn = sqlite3.connect('shop.db')
     cursor = conn.cursor()
-    cursor.execute('''INSERT INTO products (category, name, photo_id, price_stock, price_4_7, price_15_22, description) 
-                      VALUES (?, ?, ?, ?, ?, ?, ?)''',
-                   (d['category'], d['name'], d['photo_id'], d['price_stock'], d['price_4_7'], d['price_15_22'], d['description']))
+    cursor.execute('''INSERT INTO products (category, name, photo_id, price_stock, price_4_7, price_15_22, description) VALUES (?, ?, ?, ?, ?, ?, ?)''', (d['category'], d['name'], d['photo_id'], d['price_stock'], d['price_4_7'], d['price_15_22'], d['description']))
     conn.commit()
     conn.close()
     bot.send_message(message.chat.id, f"✅ Моли «{d['name']}» ба бахши «{d['category']}» илова шуд!")
@@ -264,11 +256,9 @@ def show_products_page(chat_id, category, page):
     cursor = conn.cursor()
     cursor.execute('SELECT COUNT(*) FROM products WHERE category = ?', (category,))
     total_items = cursor.fetchone()[0]
-    cursor.execute('SELECT id, name, price_stock FROM products WHERE category = ? LIMIT ? OFFSET ?', 
-                   (category, items_per_page, offset))
+    cursor.execute('SELECT id, name, price_stock FROM products WHERE category = ? LIMIT ? OFFSET ?', (category, items_per_page, offset))
     products = cursor.fetchall()
     conn.close()
-    
     if total_items == 0:
         bot.send_message(chat_id, "🌿 Дар ин бахш ҳоло молҳо нест. Ба зудӣ илова мешаванд.")
         return
@@ -390,7 +380,8 @@ def handle_order_details(message):
     except:
         bot.send_message(message.chat.id, "Хато. Аз нав кӯшиш кунед.")
     d['state'] = 'authorized'
-    @bot.message_handler(commands=['add_sale'])
+
+@bot.message_handler(commands=['add_sale'])
 def admin_add_sale(message):
     if str(message.chat.id) == ADMIN_ID:
         try:
@@ -398,18 +389,4 @@ def admin_add_sale(message):
             sid, comm = int(args[1]), float(args[2])
             conn = sqlite3.connect('shop.db')
             cursor = conn.cursor()
-            cursor.execute('UPDATE sellers SET total_orders = total_orders + 1, total_sales = total_sales + 1, total_earned = total_earned + ? WHERE user_id = ?', (comm, sid))
-            conn.commit()
-            conn.close()
-            bot.reply_to(message, f"✅ Фурӯш барои {sid} сабт шуд. Комиссия: {comm}с")
-        except:
-            bot.reply_to(message, "Хато. Мисол: /add_sale 123456789 50")
-
-def run_bot():
-    bot.polling(none_stop=True)
-
-if __name__ == '__main__':
-    t = Thread(target=run_bot)
-    t.start()
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+            cursor.execute('UPDATE sellers SET total_orders = total_orders + 1, total_sales =
