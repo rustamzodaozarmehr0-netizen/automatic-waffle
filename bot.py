@@ -3,19 +3,26 @@ from flask import Flask
 from threading import Thread
 from telebot import types
 import sqlite3
+import os
 
+# ТОКЕН ВА ID-И ХУДРО ИН ҶО ГУЗОР
 TOKEN = '8944741788:AAGGSOQ7tpkeX8uJ-7-6pl_11imx_xgvr5w'
 ADMIN_ID = '6367413561' # ID-и худатро нависед!
 
 VALID_CODES = {
+    # 👗 Кодҳои духтарон (5 рақама)
     "49182": "girl", "73719": "girl", "28405": "girl", "91837": "girl", "56204": "girl",
     "10593": "girl", "84621": "girl", "37048": "girl", "62915": "girl", "05732": "girl",
     "29483": "girl", "61824": "girl", "75039": "girl", "18347": "girl", "50264": "girl",
     "93821": "girl", "46715": "girl", "82940": "girl", "31576": "girl", "60482": "girl",
+
+    # 👕 Кодҳои писарон (5 рақама)
     "81924": "boy", "37405": "boy", "92058": "boy", "16539": "boy", "74812": "boy",
     "50396": "boy", "28147": "boy", "65930": "boy", "41785": "boy", "09624": "boy",
     "73582": "boy", "14906": "boy", "86231": "boy", "40875": "boy", "59123": "boy",
     "27648": "boy", "95310": "boy", "68427": "boy", "32059": "boy", "81746": "boy",
+
+    # 🌟 Кодҳои махсус - Ҳар ду бахш (6 рақама)
     "849201": "all", "375912": "all", "620485": "all", "193746": "all", "758204": "all", "412869": "all"
 }
 
@@ -87,7 +94,7 @@ def show_main_menu(chat_id, gender):
     elif gender == "boy":
         markup.add(types.KeyboardButton("👕 Либосҳои мардона"), types.KeyboardButton("👞 Пойафзоли мардона"),
                    types.KeyboardButton("🎒 Сумкаҳо"), types.KeyboardButton("🧴 Дигар чизҳо"))
-    else:
+    else: # "all" (Ҳар ду бахш)
         markup.add(types.KeyboardButton("👗 Либосҳои занона"), types.KeyboardButton("👕 Либосҳои мардона"))
         markup.add(types.KeyboardButton("👟 Пойафзоли занона"), types.KeyboardButton("👞 Пойафзоли мардона"))
         markup.add(types.KeyboardButton("👜 Сумкаҳо"), types.KeyboardButton("💄 Косметика"), types.KeyboardButton("🧴 Дигар чизҳо"))
@@ -207,7 +214,6 @@ def add_product_price_15_22(message):
     d = user_states[message.chat.id]
     conn = sqlite3.connect('shop.db')
     cursor = conn.cursor()
-    # ИСЛОҲ ШУД: description илова карда шуд
     cursor.execute('''INSERT INTO products (category, name, photo_id, price_stock, price_4_7, price_15_22, description) 
                       VALUES (?, ?, ?, ?, ?, ?, ?)''',
                    (d['category'], d['name'], d['photo_id'], d['price_stock'], d['price_4_7'], d['price_15_22'], d['description']))
@@ -267,7 +273,6 @@ def show_products_page(chat_id, category, page):
     cursor = conn.cursor()
     cursor.execute('SELECT COUNT(*) FROM products WHERE category = ?', (category,))
     total_items = cursor.fetchone()[0]
-    
     cursor.execute('SELECT id, name, price_stock FROM products WHERE category = ? LIMIT ? OFFSET ?', 
                    (category, items_per_page, offset))
     products = cursor.fetchall()
@@ -276,33 +281,26 @@ def show_products_page(chat_id, category, page):
     if total_items == 0:
         bot.send_message(chat_id, "🌿 Дар ин бахш ҳоло молҳо нест. Ба зудӣ илова мешаванд.")
         return
-        
     total_pages = (total_items + items_per_page - 1) // items_per_page
-    
     markup = types.InlineKeyboardMarkup(row_width=1)
     for p in products:
         markup.add(types.InlineKeyboardButton(f"{p[1]} - {p[2]}с", callback_data=f"view_{p[0]}"))
-    
     nav_buttons = []
     if page > 1:
         nav_buttons.append(types.InlineKeyboardButton("⬅️ Қаблӣ", callback_data=f"page_{page-1}"))
     if page < total_pages:
         nav_buttons.append(types.InlineKeyboardButton("Баъдӣ ➡️", callback_data=f"page_{page+1}"))
-    
     if nav_buttons:
         markup.row(*nav_buttons)
-        
     bot.send_message(chat_id, f"📁 <b>{category}</b>\nСаҳифаи {page} аз {total_pages}\n\nЛутфан, моли дилхоҳро интихоб кунед:", reply_markup=markup, parse_mode='HTML')
 
 @bot.message_handler(func=lambda message: user_states.get(message.chat.id, {}).get('state') == 'authorized')
 def handle_menu(message):
     text = message.text
-    
     if "Сумкаҳо" in text or "Косметика" in text or "Дигар" in text or "Табиӣ" in text or "Либос" in text or "Пойафзол" in text:
         user_states[message.chat.id]['current_cat'] = text
         user_states[message.chat.id]['current_page'] = 1
         show_products_page(message.chat.id, text, 1)
-        
     elif "Рейтинг" in text:
         conn = sqlite3.connect('shop.db')
         cursor = conn.cursor()
@@ -316,7 +314,6 @@ def handle_menu(message):
             bot.send_message(message.chat.id, t, parse_mode='HTML')
         else:
             bot.send_message(message.chat.id, "Рейтинг холӣ аст.")
-        
     elif "Ҳисоби ман" in text:
         conn = sqlite3.connect('shop.db')
         cursor = conn.cursor()
@@ -331,16 +328,13 @@ def handle_menu(message):
                 parse_mode='HTML')
         else:
             bot.send_message(message.chat.id, "Ҳисоб холӣ аст.")
-            
     elif "Тамос" in text:
         bot.send_message(message.chat.id, "📞 Телефон: +992 02-332-19-19\nTelegram: @Rustamzoda6789")
 
-# ============ САҲИФАБАНДӢ ============
 @bot.callback_query_handler(func=lambda call: call.data.startswith('page_'))
 def handle_pagination(call):
     page = int(call.data.split('_')[1])
     cat = user_states.get(call.message.chat.id, {}).get('current_cat')
-    
     if cat:
         show_products_page(call.message.chat.id, cat, page)
         try:
@@ -349,7 +343,6 @@ def handle_pagination(call):
             pass
     bot.answer_callback_query(call.id)
 
-# ============ НАМОИШИ МОЛИ ИНТИХОБШУДА ============
 @bot.callback_query_handler(func=lambda call: call.data.startswith('view_'))
 def view_product(call):
     pid = call.data.split('_')[1]
@@ -384,7 +377,6 @@ def view_product(call):
     
     bot.answer_callback_query(call.id)
 
-# ============ ҚАБУЛИ ФАРМОИШ ============
 @bot.callback_query_handler(func=lambda call: call.data.startswith('order_'))
 def handle_order_type(call):
     _, pid, otype = call.data.split('_', 2)
@@ -409,10 +401,11 @@ def handle_order_type(call):
     bot.send_message(call.message.chat.id, f"📦 {p[0]}\n📋 {ttext}\n💵 {price}с\n\nРанг, андоза, миқдорро нависед:")
     bot.answer_callback_query(call.id)
 
-# ИСЛОҲ ШУД: Қисми буридашуда пурра карда шуд
 @bot.message_handler(func=lambda message: user_states.get(message.chat.id, {}).get('state') == 'waiting_order_details')
 def handle_order_details(message):
     d = user_states[message.chat.id]
     try:
         bot.send_message(ADMIN_ID, 
-            f"🛍️ <b>ФАРМОИШИ НАВ!</b>\n\n👤 {message.from_user.first_name} (ID: {message.chat.id})\n📦 {d['product']}\n📋 {
+            f"🛍️ <b>ФАРМОИШИ НАВ!</b>\n\n👤 {message.from_user.first_name} (ID: {message.chat.id})\n📦 {d['product']}\n📋 {d['order_type']}\n💵 {d['price']}с\n🎨 {message.text}",
+            parse_mode='HTML')
+        bot.send_message(message
