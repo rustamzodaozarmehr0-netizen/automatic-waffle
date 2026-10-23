@@ -4,7 +4,7 @@ from threading import Thread
 from telebot import types
 import sqlite3
 
-TOKEN = '8944741788:AAE27y2JQD4NZrQN20e1YSe7pjAeikpthG4'
+TOKEN = '8944741788:AAGGSOQ7tpkeX8uJ-7-6pl_11imx_xgvr5w'
 ADMIN_ID = '6367413561' # ID-и худатро нависед!
 
 VALID_CODES = {
