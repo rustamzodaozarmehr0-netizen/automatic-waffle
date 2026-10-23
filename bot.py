@@ -8,26 +8,17 @@ TOKEN = '8944741788:AAGGSOQ7tpkeX8uJ-7-6pl_11imx_xgvr5w'
 ADMIN_ID = '6367413561' # ID-и худатро нависед!
 
 VALID_CODES = {
-    # 👗 Кодҳои духтарон (5 рақама)
     "49182": "girl", "73719": "girl", "28405": "girl", "91837": "girl", "56204": "girl",
     "10593": "girl", "84621": "girl", "37048": "girl", "62915": "girl", "05732": "girl",
     "29483": "girl", "61824": "girl", "75039": "girl", "18347": "girl", "50264": "girl",
     "93821": "girl", "46715": "girl", "82940": "girl", "31576": "girl", "60482": "girl",
-
-    # 👕 Кодҳои писарон (5 рақама)
     "81924": "boy", "37405": "boy", "92058": "boy", "16539": "boy", "74812": "boy",
     "50396": "boy", "28147": "boy", "65930": "boy", "41785": "boy", "09624": "boy",
     "73582": "boy", "14906": "boy", "86231": "boy", "40875": "boy", "59123": "boy",
     "27648": "boy", "95310": "boy", "68427": "boy", "32059": "boy", "81746": "boy",
-
-    # 🌟 Кодҳои махсус - Ҳар ду бахш (6 рақама - Хеле қавӣ!)
-    "849201": "all", 
-    "375912": "all", 
-    "620485": "all", 
-    "193746": "all", 
-    "758204": "all", 
-    "412869": "all"
+    "849201": "all", "375912": "all", "620485": "all", "193746": "all", "758204": "all", "412869": "all"
 }
+
 bot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 user_states = {}
@@ -96,7 +87,7 @@ def show_main_menu(chat_id, gender):
     elif gender == "boy":
         markup.add(types.KeyboardButton("👕 Либосҳои мардона"), types.KeyboardButton("👞 Пойафзоли мардона"),
                    types.KeyboardButton("🎒 Сумкаҳо"), types.KeyboardButton("🧴 Дигар чизҳо"))
-    else: # "all" (Ҳар ду бахш)
+    else:
         markup.add(types.KeyboardButton("👗 Либосҳои занона"), types.KeyboardButton("👕 Либосҳои мардона"))
         markup.add(types.KeyboardButton("👟 Пойафзоли занона"), types.KeyboardButton("👞 Пойафзоли мардона"))
         markup.add(types.KeyboardButton("👜 Сумкаҳо"), types.KeyboardButton("💄 Косметика"), types.KeyboardButton("🧴 Дигар чизҳо"))
@@ -184,31 +175,31 @@ def add_product_photo(message):
 def add_product_category(message):
     user_states[message.chat.id]['category'] = message.text
     user_states[message.chat.id]['state'] = 'admin_name'
-    bot.send_message(message.chat.id, "📝 Номи молро нависед (танҳо ном, на нарх):")
+    bot.send_message(message.chat.id, "📝 Номи молро нависед:")
 
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_name')
 def add_product_name(message):
     user_states[message.chat.id]['name'] = message.text
     user_states[message.chat.id]['state'] = 'admin_description'
     bot.send_message(message.chat.id, "📄 Тавсифи молро нависед (барои чӣ, таркиб, чӣ тавр истифода мешавад):")
-    @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_description')
 
-    def add_product_description(message):
+@bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_description')
+def add_product_description(message):
     user_states[message.chat.id]['description'] = message.text
     user_states[message.chat.id]['state'] = 'admin_price_stock'
     bot.send_message(message.chat.id, "💵 Нархи Наличи (Тайёр) бо сомонӣ (ё `-` агар нест):")
-    
+
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_price_stock')
 def add_product_price_stock(message):
     user_states[message.chat.id]['price_stock'] = message.text
     user_states[message.chat.id]['state'] = 'admin_price_4_7'
-    bot.send_message(message.chat.id, "💵 Нархи Под заказ (4-7 рӯз):")
+    bot.send_message(message.chat.id, "💵 Нархи Под заказ (4-7 рӯз) (ё `-` агар нест):")
 
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_price_4_7')
 def add_product_price_4_7(message):
     user_states[message.chat.id]['price_4_7'] = message.text
     user_states[message.chat.id]['state'] = 'admin_price_15_22'
-    bot.send_message(message.chat.id, "💵 Нархи Под заказ (15-22 рӯз):")
+    bot.send_message(message.chat.id, "💵 Нархи Под заказ (15-22 рӯз) (ё `-` агар нест):")
 
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_price_15_22')
 def add_product_price_15_22(message):
@@ -216,9 +207,10 @@ def add_product_price_15_22(message):
     d = user_states[message.chat.id]
     conn = sqlite3.connect('shop.db')
     cursor = conn.cursor()
-    cursor.execute('''INSERT INTO products (category, name, photo_id, price_stock, price_4_7, price_15_22) 
-                      VALUES (?, ?, ?, ?, ?, ?)''',
-                   (d['category'], d['name'], d['photo_id'], d['price_stock'], d['price_4_7'], d['price_15_22']))
+    # ИСЛОҲ ШУД: description илова карда шуд
+    cursor.execute('''INSERT INTO products (category, name, photo_id, price_stock, price_4_7, price_15_22, description) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                   (d['category'], d['name'], d['photo_id'], d['price_stock'], d['price_4_7'], d['price_15_22'], d['description']))
     conn.commit()
     conn.close()
     bot.send_message(message.chat.id, f"✅ Моли «{d['name']}» ба бахши «{d['category']}» илова шуд!")
@@ -266,7 +258,7 @@ def back_to_menu_admin(message):
     gender = user_states.get(message.chat.id, {}).get('gender', 'boy')
     show_main_menu(message.chat.id, gender)
 
-# ============ КОРКАРДИ МОЛҲО (Бо саҳифабандӣ) ============
+# ============ КОРКАРДИ МОЛҲО ============
 def show_products_page(chat_id, category, page):
     items_per_page = 5
     offset = (page - 1) * items_per_page
@@ -417,24 +409,10 @@ def handle_order_type(call):
     bot.send_message(call.message.chat.id, f"📦 {p[0]}\n📋 {ttext}\n💵 {price}с\n\nРанг, андоза, миқдорро нависед:")
     bot.answer_callback_query(call.id)
 
+# ИСЛОҲ ШУД: Қисми буридашуда пурра карда шуд
 @bot.message_handler(func=lambda message: user_states.get(message.chat.id, {}).get('state') == 'waiting_order_details')
 def handle_order_details(message):
     d = user_states[message.chat.id]
     try:
         bot.send_message(ADMIN_ID, 
-            f"🛍️ <b>ФАРМОИШИ НАВ!</b>\n\n👤 {message.from_user.first_name} (ID: {message.chat.id})\n📦 {d['product']}\n📋 {d['order_type']}\n💵 {d['price']}с\n🎨 {message.text}",
-            parse_mode='HTML')
-        bot.send_message(message.chat.id, "✅ Фармоиш ба админ равон шуд!")
-    except:
-        bot.send_message(message.chat.id, "Хато. Аз нав кӯшиш кунед.")
-    d['state'] = 'authorized'
-
-@bot.message_handler(commands=['add_sale'])
-def admin_add_sale(message):
-    if str(message.chat.id) == ADMIN_ID:
-        try:
-            args = message.text.split()
-            sid, comm = int(args[1]), float(args[2])
-            conn = sqlite3.connect('shop.db')
-            cursor = conn.cursor()
-            cursor.execute('UPDATE sellers SET total_orders = total_orders + 1, total_sales = total_sales + 1, total_earned = total_
+            f"🛍️ <b>ФАРМОИШИ НАВ!</b>\n\n👤 {message.from_user.first_name} (ID: {message.chat.id})\n📦 {d['product']}\n📋 {
