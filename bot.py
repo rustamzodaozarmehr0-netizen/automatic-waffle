@@ -389,4 +389,18 @@ def admin_add_sale(message):
             sid, comm = int(args[1]), float(args[2])
             conn = sqlite3.connect('shop.db')
             cursor = conn.cursor()
-            cursor.execute('UPDATE sellers SET total_orders = total_orders + 1, total_sales =
+            cursor.execute('UPDATE sellers SET total_orders = total_orders + 1, total_sales = total_sales + 1, total_earned = total_earned + ? WHERE user_id = ?', (comm, sid))
+            conn.commit()
+            conn.close()
+            bot.reply_to(message, f"✅ Фурӯш барои {sid} сабт шуд. Комиссия: {comm}с")
+        except:
+            bot.reply_to(message, "Хато. Мисол: /add_sale 123456789 50")
+
+def run_bot():
+    bot.polling(none_stop=True)
+
+if __name__ == '__main__':
+    t = Thread(target=run_bot)
+    t.start()
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
