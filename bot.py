@@ -5,7 +5,6 @@ from telebot import types
 import psycopg2
 import os
 
-# ТОКЕН, ID ВА САТРИ ПАЙВАСТИРО ИН ҶО ГУЗОР
 TOKEN = '8944741788:AAHEhGy1JpW_6Jve0MBPetm2_tbWtrN-YyI'
 ADMIN_ID = '6367413561' 
 DATABASE_URL = 'postgresql://postgres:ПаролиТу@db.hcpwhqwvikdstlxbeayf.supabase.co:5432/postgres'
@@ -42,7 +41,6 @@ def init_db():
             total_earned REAL DEFAULT 0.0
         )
     ''')
-    # База барои молҳо (бо сутуни media_type барои видео/акс)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS products (
             id SERIAL PRIMARY KEY,
@@ -114,31 +112,25 @@ def check_code(message):
         cursor = conn.cursor()
         cursor.execute('SELECT user_id FROM sellers WHERE registered_code = %s', (entered_code,))
         existing_user = cursor.fetchone()
-        
         if existing_user:
             bot.send_message(message.chat.id, "❌ Ин код аллакай аз ҷониби фурӯшандаи дигар истифода шудааст!")
             cursor.close()
             conn.close()
             return
-
         gender = VALID_CODES[entered_code]
         name = user_states[message.chat.id]['name']
         phone = user_states[message.chat.id]['phone']
         user_states[message.chat.id]['state'] = 'authorized'
         user_states[message.chat.id]['gender'] = gender
-        
-        cursor.execute('INSERT INTO sellers (user_id, name, phone, gender, registered_code) VALUES (%s, %s, %s, %s, %s)', 
-                       (message.chat.id, name, phone, gender, entered_code))
+        cursor.execute('INSERT INTO sellers (user_id, name, phone, gender, registered_code) VALUES (%s, %s, %s, %s, %s)', (message.chat.id, name, phone, gender, entered_code))
         conn.commit()
         cursor.close()
         conn.close()
-        
         bot.send_message(message.chat.id, "✅ Код қабул шуд! Хуш омадед.")
         show_main_menu(message.chat.id, gender)
     else:
         bot.send_message(message.chat.id, "❌ Код хато аст! Аз нав кӯшиш кунед.")
 
-# ============ ПАНЕЛИ АДМИН ============
 @bot.message_handler(commands=['admin'])
 def admin_panel(message):
     if str(message.chat.id) != ADMIN_ID:
@@ -150,7 +142,6 @@ def admin_panel(message):
     markup.add(types.KeyboardButton("⬅️ Бозгашт ба меню"))
     bot.send_message(message.chat.id, "👑 ПАНЕЛИ АДМИН\n\nЛутфан, амалро интихоб кунед:", reply_markup=markup)
 
-# ИДОРАКУНИИ ФУРУШАНДАГОН (Бо тугмаҳои нест кардан)
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "👥 Идоракунии фурӯшандагон")
 def manage_sellers(message):
     conn = get_db()
@@ -159,22 +150,18 @@ def manage_sellers(message):
     sellers = cursor.fetchall()
     cursor.close()
     conn.close()
-    
     if not sellers:
         bot.send_message(message.chat.id, "Ҳоло фурӯшандагон нест.")
         return
-        
     markup = types.InlineKeyboardMarkup(row_width=1)
     for s in sellers:
         markup.add(types.InlineKeyboardButton(f"❌ {s[1]} ({s[2]})", callback_data=f"del_seller_{s[0]}"))
-        
     bot.send_message(message.chat.id, "👥 <b>Барои нест кардани фурӯшанда, рӯи номи ӯ пахш кунед:</b>", reply_markup=markup, parse_mode='HTML')
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('del_seller_'))
 def delete_seller_callback(call):
     if str(call.message.chat.id) != ADMIN_ID:
         return
-        
     uid = int(call.data.split('_')[2])
     conn = get_db()
     cursor = conn.cursor()
@@ -182,7 +169,6 @@ def delete_seller_callback(call):
     conn.commit()
     cursor.close()
     conn.close()
-    
     bot.answer_callback_query(call.id, "✅ Фурӯшанда нест карда шуд!")
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text=f"✅ Фурӯшандаи ID {uid} нест карда шуд ва кодаш озод гардид.", reply_markup=None)
 
@@ -219,13 +205,11 @@ def admin_top_sellers(message):
     else:
         bot.send_message(message.chat.id, "Рейтинг холӣ аст.")
 
-# ИЛОВАИ МОЛ (Акс ё Видео)
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "➕ Иловаи моли нав")
 def add_product_start(message):
     user_states[message.chat.id] = {'state': 'admin_photo'}
     bot.send_message(message.chat.id, "📸 Лутфан, акс ё видеои молро фиристед:")
 
-# Ин ҷо ҳам акс ва ҳам видео қабул мешавад
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_photo', content_types=['photo', 'video'])
 def add_product_photo(message):
     if message.content_type == 'photo':
@@ -234,7 +218,6 @@ def add_product_photo(message):
     elif message.content_type == 'video':
         user_states[message.chat.id]['photo_id'] = message.video.file_id
         user_states[message.chat.id]['media_type'] = 'video'
-        
     user_states[message.chat.id]['state'] = 'admin_category'
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     markup.add("👕 Либосҳои мардона", "👗 Либосҳои занона", "👞 Пойафзоли мардона", "👟 Пойафзоли занона", "👜 Сумкаҳо", "💄 Косметика", "🌿 Табиӣ ва Дору", "🧴 Дигар чизҳо")
@@ -250,25 +233,25 @@ def add_product_category(message):
 def add_product_name(message):
     user_states[message.chat.id]['name'] = message.text
     user_states[message.chat.id]['state'] = 'admin_description'
-    bot.send_message(message.chat.id, "📄 Тавсифи молро нависед (барои чӣ, таркиб, чӣ тавр истифода мешавад):")
+    bot.send_message(message.chat.id, "📄 Тавсифи молро нависед:")
 
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_description')
 def add_product_description(message):
     user_states[message.chat.id]['description'] = message.text
     user_states[message.chat.id]['state'] = 'admin_price_stock'
-    bot.send_message(message.chat.id, "💵 Нархи Наличи (Тайёр) бо сомонӣ (ё `-` агар нест):")
+    bot.send_message(message.chat.id, "💵 Нархи Наличи (Тайёр) бо сомонӣ (ё `-`):")
 
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_price_stock')
 def add_product_price_stock(message):
     user_states[message.chat.id]['price_stock'] = message.text
     user_states[message.chat.id]['state'] = 'admin_price_4_7'
-    bot.send_message(message.chat.id, "💵 Нархи Под заказ (4-7 рӯз) (ё `-` агар нест):")
+    bot.send_message(message.chat.id, "💵 Нархи 4-7 рӯз (ё `-`):")
 
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_price_4_7')
 def add_product_price_4_7(message):
     user_states[message.chat.id]['price_4_7'] = message.text
     user_states[message.chat.id]['state'] = 'admin_price_15_22'
-    bot.send_message(message.chat.id, "💵 Нархи Под заказ (15-22 рӯз) (ё `-` агар нест):")
+    bot.send_message(message.chat.id, "💵 Нархи 15-22 рӯз (ё `-`):")
 
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_price_15_22')
 def add_product_price_15_22(message):
@@ -276,8 +259,7 @@ def add_product_price_15_22(message):
     d = user_states[message.chat.id]
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('''INSERT INTO products (category, name, photo_id, media_type, price_stock, price_4_7, price_15_22, description) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)''', 
-                   (d['category'], d['name'], d['photo_id'], d['media_type'], d['price_stock'], d['price_4_7'], d['price_15_22'], d['description']))
+    cursor.execute('''INSERT INTO products (category, name, photo_id, media_type, price_stock, price_4_7, price_15_22, description) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)''', (d['category'], d['name'], d['photo_id'], d['media_type'], d['price_stock'], d['price_4_7'], d['price_15_22'], d['description']))
     conn.commit()
     cursor.close()
     conn.close()
@@ -359,11 +341,9 @@ def show_products_page(chat_id, category, page):
 def handle_menu(message):
     text = message.text
     user_gender = user_states.get(message.chat.id, {}).get('gender')
-    
     if user_gender == "med" and not ("Табиӣ" in text or "Ҳисоб" in text or "Рейтинг" in text or "Тамос" in text):
         bot.send_message(message.chat.id, "❌ Шумо танҳо ба бахши Табиӣ ва Дору дастрасӣ доред.")
         return
-
     if "Сумкаҳо" in text or "Косметика" in text or "Дигар" in text or "Табиӣ" in text or "Либос" in text or "Пойафзол" in text:
         user_states[message.chat.id]['current_cat'] = text
         user_states[message.chat.id]['current_page'] = 1
@@ -410,7 +390,6 @@ def handle_pagination(call):
             pass
     bot.answer_callback_query(call.id)
 
-# НАМОИШИ МОЛ (Бо тафтиши акс ё видео)
 @bot.callback_query_handler(func=lambda call: call.data.startswith('view_'))
 def view_product(call):
     pid = call.data.split('_')[1]
@@ -434,7 +413,6 @@ def view_product(call):
     caption = f"📦 <b>{pname}</b>"
     if p_desc and p_desc != '-':
         caption += f"\n\n📝 {p_desc}"
-        
     try:
         if m_type == 'video':
             bot.send_video(call.message.chat.id, media_id, caption=caption, reply_markup=markup, parse_mode='HTML')
