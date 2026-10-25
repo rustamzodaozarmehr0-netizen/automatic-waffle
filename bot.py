@@ -5,8 +5,8 @@ from telebot import types
 import psycopg2
 import os
 
-TOKEN = '8944741788:AAGGSOQ7tpkeX8uJ-7-6pl_11imx_xgvr5w'
-ADMIN_ID = '6367413561' 
+TOKEN = '8944741788:AAHEhGy1JpW_6Jve0MBPetm2_tbWtrN-YyI'
+ADMIN_ID = '6367413561'
 DATABASE_URL = 'postgresql://postgres:Rustamzoda.0666@db.hcpwhqwvikdstlxbeayf.supabase.co:5432/postgres'
 
 VALID_CODES = {
