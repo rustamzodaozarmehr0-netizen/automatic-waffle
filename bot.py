@@ -5,9 +5,9 @@ from telebot import types
 import psycopg2
 import os
 
-TOKEN = '8944741788:AAHEhGy1JpW_6Jve0MBPetm2_tbWtrN-YyI'
+TOKEN = '8944741788:AAFzTFHj1tN-TWY1PFEczpt9BvyL1xG24HA'
 ADMIN_ID = '6367413561'
-DATABASE_URL = 'postgresql://postgres:Rustamzoda.0666@db.hcpwhqwvikdstlxbeayf.supabase.co:5432/postgres'
+DATABASE_URL = 'postgresql://postgres:RustamzodaFLStyle@db.hcpwhqwvikdstlxbeayf.supabase.co:5432/postgres'
 
 VALID_CODES = {
     "49182": "girl", "73719": "girl", "28405": "girl", "91837": "girl", "56204": "girl",
