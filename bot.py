@@ -7,7 +7,7 @@ import os
 
 TOKEN = '8944741788:AAFyEbuC4dNUf49ege7HZFxaestT0h-WnCk'
 ADMIN_ID = '6367413561'
-DATABASE_URL = 'postgresql://postgres:RustamzodaFLStyle@db.hcpwhqwvikdstlxbeayf.supabase.co:5432/postgres'
+DATABASE_URL = 'postgresql://postgres.rezfktloehbxnzwflcdj:rustamzodafls2006@aws-0-ap-south-1.pooler.supabase.com:5432/postgres'
 
 VALID_CODES = {
     "49182": "girl", "73719": "girl", "28405": "girl", "91837": "girl", "56204": "girl",
