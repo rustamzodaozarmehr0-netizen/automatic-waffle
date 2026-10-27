@@ -5,7 +5,7 @@ from telebot import types
 import psycopg2
 import os
 
-TOKEN = '8944741788:AAFzTFHj1tN-TWY1PFEczpt9BvyL1xG24HA'
+TOKEN = '8944741788:AAFyEbuC4dNUf49ege7HZFxaestT0h-WnCk'
 ADMIN_ID = '6367413561'
 DATABASE_URL = 'postgresql://postgres.hcpwhqwvikdstlxbeayf:RustamzodaFlStyle@aws-0-ap-south-1.pooler.supabase.com:5432/postgres'
 
