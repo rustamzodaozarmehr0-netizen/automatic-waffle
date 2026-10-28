@@ -15,7 +15,8 @@ VALID_CODES = {
     "81924": "boy", "37405": "boy", "92058": "boy", "16539": "boy", "74812": "boy",
     "50396": "boy", "28147": "boy", "65930": "boy", "41785": "boy", "09624": "boy",
     "849201": "all", "375912": "all", "620485": "all", "193746": "all", "758204": "all", 
-    "300123": "med", "444777": "med", "555888": "med"
+    "300123": "med", "444777": "med", "555888": "med", "TECH255524":  "tech", "PHONE254745": "phone",    
+"TECH26645":  "tech", "PHONE567524": "phone"
 }
 
 bot = telebot.TeleBot(TOKEN)
@@ -66,6 +67,10 @@ def show_main_menu(chat_id, gender):
     if gender == "med":
         markup.add("🌿 Табиӣ ва Дору", "📊 Ҳисоби ман", "🏆 Рейтинг", "📞 Тамос бо мо")
     elif gender == "girl":
+        elif gender == "tech":
+    markup.add("🔌 Асбобҳои рӯзғор", "📊 Ҳисоби ман", "🏆 Рейтинг", "📞 Тамос бо мо")
+elif gender == "phone":
+    markup.add("📱 Телефонҳо", "📊 Ҳисоби ман", "🏆 Рейтинг", "📞 Тамос бо мо")
         markup.add("👗 Либосҳои занона", "👟 Пойафзоли занона", "👜 Сумкаҳо", "💄 Косметика", "🌿 Табиӣ ва Дору", "📊 Ҳисоби ман", "🏆 Рейтинг", "📞 Тамос бо мо")
     elif gender == "boy":
         markup.add("👕 Либосҳои мардона", "👞 Пойафзоли мардона", "🎒 Сумкаҳо", "🧴 Дигар чизҳо", "🌿 Табиӣ ва Дору", "📊 Ҳисоби ман", "🏆 Рейтинг", "📞 Тамос бо мо")
@@ -181,7 +186,7 @@ def add_product_photo(message):
         user_states[message.chat.id]['media_type'] = 'video'
     user_states[message.chat.id]['state'] = 'admin_category'
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    markup.add("👕 Либосҳои мардона", "👗 Либосҳои занона", "👞 Пойафзоли мардона", "👟 Пойафзоли занона", "👜 Сумкаҳо", "💄 Косметика", "🌿 Табиӣ ва Дору", "🧴 Дигар чизҳо")
+    markup.add("👕 Либосҳои мардона", "👗 Либосҳои занона", "👞 Пойафзоли мардона", "👟 Пойафзоли занона", "👜 Сумкаҳо", "💄 Косметика", "🌿 Табиӣ ва Дору", "🧴 Дигар чизҳо", "Acбобҳои рӯзғор", "Телефонҳо") 
     bot.send_message(message.chat.id, "📁 Бахшро интихоб кунед:", reply_markup=markup)
 
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and user_states.get(message.chat.id, {}).get('state') == 'admin_category')
