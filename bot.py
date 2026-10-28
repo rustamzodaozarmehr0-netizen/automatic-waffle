@@ -78,29 +78,43 @@ def show_main_menu(chat_id, gender):
         markup.add("👗 Либосҳои занона", "👕 Либосҳои мардона", "👟 Пойафзоли занона", "👞 Пойафзоли мардона", "👜 Сумкаҳо", "💄 Косметика", "🧴 Дигар чизҳо", "🌿 Табиӣ ва Дору", "📊 Ҳисоби ман", "🏆 Рейтинг", "📞 Тамос бо мо")
     bot.send_message(chat_id, "🏠 Менюи асосӣ:", reply_markup=markup)
 
-@bot.message_handler(func=lambda message: user_states.get(message.chat.id, {}).get('state') == 'waiting_code')
+@bot.message_handler(func=lambda m: user_states.get(m.chat.id, {}).get('state') == 'waiting_code')
 def check_code(message):
     entered_code = message.text.strip()
-    if entered_code in VALID_CODES:
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute('SELECT user_id FROM sellers WHERE registered_code = %s', (entered_code,))
-        if cursor.fetchone():
-            bot.send_message(message.chat.id, "❌ Ин код аллакай истифода шудааст!")
-            cursor.close()
-            conn.close()
-            return
-        gender = VALID_CODES[entered_code]
-        user_states[message.chat.id]['state'] = 'authorized'
-        user_states[message.chat.id]['gender'] = gender
-        cursor.execute('INSERT INTO sellers (user_id, name, phone, gender, registered_code) VALUES (%s, %s, %s, %s, %s)', (message.chat.id, user_states[message.chat.id]['name'], user_states[message.chat.id]['phone'], gender, entered_code))
-        conn.commit()
+    if entered_code not in VALID_CODES:
+        bot.send_message(message.chat.id, "❌ Код хато аст!")
+        return
+
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # 1. Тафтиши он ки ин код аллакай истифода нашудааст
+    cursor.execute('SELECT user_id FROM sellers WHERE registered_code = %s', (entered_code,))
+    if cursor.fetchone():
+        bot.send_message(message.chat.id, "❌ Ин код аллакай истифода шудааст!")
         cursor.close()
         conn.close()
-        bot.send_message(message.chat.id, "✅ Код қабул шуд!")
-        show_main_menu(message.chat.id, gender)
-    else:
-        bot.send_message(message.chat.id, "❌ Код хато аст!")
+        return
+        
+    # 2. Тафтиши он ки ин корбар аллакай сабти ном нашудааст (Иловаи нав)
+    cursor.execute('SELECT user_id FROM sellers WHERE user_id = %s', (message.chat.id,))
+    if cursor.fetchone():
+        bot.send_message(message.chat.id, "❌ Шумо аллакай сабти ном шудаед! Барои санҷиши нав, аввал аккаунти худро дар панели Админ нест кунед.")
+        cursor.close()
+        conn.close()
+        return
+
+    # 3. Сабти корбари нав
+    gender = VALID_CODES[entered_code]
+    user_states[message.chat.id]['state'] = 'authorized'
+    user_states[message.chat.id]['gender'] = gender
+    
+    cursor.execute('INSERT INTO sellers (user_id, name, phone, gender, registered_code) VALUES (%s, %s, %s, %s, %s)', (message.chat.id, user_states[message.chat.id]['name'], user_states[message.chat.id]['phone'], gender, entered_code))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    bot.send_message(message.chat.id, "✅ Код қабул шуд!")
+    show_main_menu(message.chat.id, gender)
 
 @bot.message_handler(commands=['admin'])
 def admin_panel(message):
