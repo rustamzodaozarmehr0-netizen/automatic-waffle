@@ -308,7 +308,7 @@ def handle_menu(message):
     if ug == "med" and not ("Табиӣ" in text or "Ҳисоб" in text or "Рейтинг" in text or "Тамос" in text):
         bot.send_message(message.chat.id, "❌ Танҳо бахши Табиӣ.")
         return
-    if any(x in text for x in ["Сумкаҳо", "Косметика", "Дигар", "Табиӣ", "Либос", "Пойафзол"]):
+    if any(x in text for x in ["Сумкаҳо", "Косметика", "Дигар", "Табиӣ", "Либос", "Пойафзол", "Асбобҳои рӯзғор", "Телефонҳо",]):
         user_states[message.chat.id]['current_cat'] = text
         show_products_page(message.chat.id, text, 1)
     elif "Рейтинг" in text:
