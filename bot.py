@@ -45,10 +45,10 @@ def index():
 def start(message):
     if str(message.from_user.id) == ADMIN_ID:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-markup.add("➕ Иловаи моли нав", "📋 Рӯйхати молҳо")
-markup.add("📊 Ҳисоботи фурӯшандагон", "🏆 Топ-фурӯшандагон")
-markup.add("👥 Идоракунии фурӯшандагон", "🗑 Нест кардани мол")
-markup.add("🔙 Бозгашт ба меню")
+        markup.add("➕ Иловаи моли нав", "📋 Рӯйхати молҳо")
+        markup.add("📊 Ҳисоботи фурӯшандагон", "🏆 Топ-фурӯшандагон")
+        markup.add("👥 Идоракунии фурӯшандагон", "🗑 Нест кардани мол")
+        markup.add("🔙 Бозгашт ба меню")
         bot.send_message(message.chat.id, "👑 ПАНЕЛИ АДМИН:", reply_markup=markup)
     else:
         user_states[message.chat.id] = {'state': 'waiting_name'}
