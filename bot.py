@@ -38,8 +38,11 @@ def init_db():
 init_db()
 
 @app.route('/')
-def index():
+def index(): 
     return "Bot is running!"
+@app.route('/health')
+def health():
+    return "OK", 200
 
 @bot.message_handler(commands=['start'])
 def start(message):
