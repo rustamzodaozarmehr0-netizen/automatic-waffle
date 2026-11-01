@@ -47,11 +47,11 @@ def health():
 @bot.message_handler(commands=['start'])
 def start(message):
     if str(message.from_user.id) == ADMIN_ID:
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("➕ Иловаи моли нав", "📋 Рӯйхати молҳо")
-        markup.add("📊 Ҳисоботи фурӯшандагон", "🏆 Топ-фурӯшандагон")
-        markup.add("👥 Идоракунии фурӯшандагон", "🗑 Нест кардани мол")
-        markup.add("🔙 Бозгашт ба меню")
+       markup.add("➕ Иловаи моли нав", "📋 Рӯйхати молҳо")
+       markup.add("📊 Ҳисоботи фурӯшандагон", "🏆 Топ-фурӯшандагон")
+       markup.add("👥 Идоракунии фурӯшандагон", "🗑 Нест кардани мол")
+       markup.add("⚙️ Танзимоти фоизҳо") # <--- ИН САТРРО ИЛОВА КУНЕД
+       markup.add("🔙 Бозгашт ба меню")
         bot.send_message(message.chat.id, "👑 ПАНЕЛИ АДМИН:", reply_markup=markup)
     else:
         user_states[message.chat.id] = {'state': 'waiting_name'}
@@ -488,6 +488,35 @@ def admin_add_sale(message):
         except Exception as e:
             print(f"Хатои add_sale: {e}")
             bot.reply_to(message, "Хато. Мисол: /add_sale 123456789 50")
+@bot.message_handler(func=lambda message: message.text == "⚙️ Танзимоти фоизҳо")
+def ask_percent(message):
+    if str(message.chat.id) == ADMIN_ID:
+        user_states[message.chat.id] = {'state': 'waiting_percent'}
+        bot.send_message(message.chat.id, "Фоизи фоидаи худро нависед (мисол: 75):")
+
+@bot.message_handler(func=lambda message: user_states.get(message.chat.id, {}).get('state') == 'waiting_percent')
+def save_percent(message):
+    try:
+        admin_p = int(message.text)
+        if admin_p < 0 or admin_p > 100:
+            raise ValueError("Хато")
+            
+        seller_p = 100 - admin_p
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        # Навсозии фоизҳо дар ҷадвали settings
+        cursor.execute("UPDATE settings SET admin_percent = %s, seller_percent = %s", (admin_p, seller_p))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        # Баргардонидани ҳолат
+        user_states[message.chat.id]['state'] = 'authorized'
+        bot.send_message(message.chat.id, f"✅ Танзим шуд!\nФоидаи шумо: {admin_p}%\nФоидаи фурӯшанда: {seller_p}%")
+        
+    except Exception:
+        bot.send_message(message.chat.id, "❌ Хато! Лутфан танҳо рақами аз 0 то 100 нависед (мисол: 75).")
 
 def run_bot():
     bot.polling(none_stop=True)
