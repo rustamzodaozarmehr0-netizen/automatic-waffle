@@ -439,7 +439,7 @@ def handle_order_details(message):
            bot.send_message(ADMIN_ID, order_text, parse_mode='HTML')
     
         # Паём ба фурӯшанда
-    bot.send_message(message.chat.id, "✅ Фармоиш равони шуд!")
+        bot.send_message(message.chat.id, "✅ Фармоиш равони шуд!")
     except:
         pass
     d['state'] = 'authorized'
