@@ -428,21 +428,23 @@ def handle_order_type(call):
 def handle_order_details(message):
     d = user_states[message.chat.id]
     try:
-       # Матни фармоишро месозем
-       order_text = f"🛒 <b>ФАРМОИШИ НАВ!</b>\n\n👤 {message.from_user.first_name}\n📦 {d['product']}\n📝 {d['order_type']}\n💰 {d['price']}"
-
-       # Агар мол акс дошта бошад, бо акс мефиристем
-       if d.get('photo_id'):
-           bot.send_photo(ADMIN_ID, photo=d['photo_id'], caption=order_text, parse_mode='HTML')
-       else:
-           # Агар акс надошта бошад, танҳо матн мефиристем
-           bot.send_message(ADMIN_ID, order_text, parse_mode='HTML')
-    
+        # Матни фармоишро месозем
+        order_text = f"🛒 <b>ФАРМОИШИ НАВ!</b>\n\n👤 {message.from_user.first_name}\n📦 {d['product']}\n📝 {d['order_type']}\n💰 {d['price']}"
+        
+        # Агар мол акс дошта бошад, бо акс мефиристем
+        if d.get('photo_id'):
+            bot.send_photo(ADMIN_ID, photo=d['photo_id'], caption=order_text, parse_mode='HTML')
+        else:
+            # Агар акс надошта бошад, танҳо матн мефиристем
+            bot.send_message(ADMIN_ID, order_text, parse_mode='HTML')
+            
         # Паём ба фурӯшанда
         bot.send_message(message.chat.id, "✅ Фармоиш равони шуд!")
-    except:
-        pass
-    d['state'] = 'authorized'
+        d['state'] = 'authorized'
+
+    except Exception as e:
+        print(f"Хатои handle_order_details: {e}")
+        bot.reply_to(message, "Хато дар ирсоли фармоиш.")
 
 @bot.message_handler(commands=['add_sale'])
 def admin_add_sale(message):
