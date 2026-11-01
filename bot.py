@@ -411,7 +411,7 @@ def handle_order_type(call):
     _, pid, otype = call.data.split('_', 2)
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('SELECT name, price_stock, price_4_7, price_15_22 FROM products WHERE id = %s', (pid,))
+    cursor.execute("SELECT name, price_stock, price_4_7, price_15_22, photo_id FROM products WHERE id = %s", (pid,))
     p = cursor.fetchone()
     cursor.close()
     conn.close()
@@ -420,7 +420,7 @@ def handle_order_type(call):
     if otype == 'stock': ttext, price = "🟢 Наличи", p[1]
     elif otype == '4_7': ttext, price = "🟡 4-7 рӯз", p[2]
     else: ttext, price = "🔴 15-22 рӯз", p[3]
-    user_states[call.message.chat.id] = {'state': 'waiting_order_details', 'product': p[0], 'order_type': ttext, 'price': price}
+    user_states[call.message.chat.id] = {'state': 'waiting_order_details', 'product': p[0], 'order_type': ttext, 'price': price, 'photo_id': p[4]}
     bot.send_message(call.message.chat.id, f"📦 {p[0]}\n📋 {ttext}\n💵 {price}с\n\nРанг, андоза, миқдорро нависед:")
     bot.answer_callback_query(call.id)
 
@@ -428,8 +428,18 @@ def handle_order_type(call):
 def handle_order_details(message):
     d = user_states[message.chat.id]
     try:
-        bot.send_message(ADMIN_ID, f"🛍️ <b>ФАРМОИШИ НАВ!</b>\n\n👤 {message.from_user.first_name}\n📦 {d['product']}\n📋 {d['order_type']}\n💵 {d['price']}с\n🎨 {message.text}", parse_mode='HTML')
-        bot.send_message(message.chat.id, "✅ Фармоиш равон шуд!")
+       # Матни фармоишро месозем
+       order_text = f"🛒 <b>ФАРМОИШИ НАВ!</b>\n\n👤 {message.from_user.first_name}\n📦 {d['product']}\n📝 {d['order_type']}\n💰 {d['price']}"
+
+       # Агар мол акс дошта бошад, бо акс мефиристем
+       if d.get('photo_id'):
+           bot.send_photo(ADMIN_ID, photo=d['photo_id'], caption=order_text, parse_mode='HTML')
+       else:
+           # Агар акс надошта бошад, танҳо матн мефиристем
+           bot.send_message(ADMIN_ID, order_text, parse_mode='HTML')
+    
+        # Паём ба фурӯшанда
+    bot.send_message(message.chat.id, "✅ Фармоиш равони шуд!")
     except:
         pass
     d['state'] = 'authorized'
@@ -439,15 +449,38 @@ def admin_add_sale(message):
     if str(message.chat.id) == ADMIN_ID:
         try:
             args = message.text.split()
+            seller_id = int(args[1])
+            total_price = float(args[2])
+            
             conn = get_db()
             cursor = conn.cursor()
-            cursor.execute('UPDATE sellers SET total_orders = total_orders + 1, total_sales = total_sales + 1, total_earned = total_earned + %s WHERE user_id = %s', (float(args[2]), int(args[1])))
+            
+            # 1. Фоизи фурӯшандаро аз ҷадвали settings мехонем
+            cursor.execute("SELECT seller_percent FROM settings LIMIT 1")
+            result = cursor.fetchone()
+            seller_p = result[0] if result else 25  # Агар ҷадвал холӣ бошад, 25% мегирад
+            
+            # 2. Ҳиссаи фурӯшандаро ҳисоб мекунем
+            seller_earned = total_price * (seller_p / 100)
+            
+            # 3. Ҳамаро дар база навсозӣ мекунем (фурӯш + баланс)
+            cursor.execute("""
+                UPDATE sellers 
+                SET total_orders = COALESCE(total_orders, 0) + 1, 
+                    total_sales = COALESCE(total_sales, 0) + %s,
+                    balance = COALESCE(balance, 0) + %s
+                WHERE user_id = %s
+            """, (total_price, seller_earned, seller_id))
+            
             conn.commit()
             cursor.close()
             conn.close()
-            bot.reply_to(message, "✅ Сабт шуд.")
-        except:
-            bot.reply_to(message, "Хато. Мисол: /add_sale 123456789 50")
+            
+            bot.reply_to(message, f"✅ Сабт шуд!\nФурӯшанда {seller_earned} сомонӣ фоида гирифт.")
+            
+except Exception as e:
+    print(f"Хатои add_sale: {e}") # <--- Ин сатрро илова кунед
+    bot.reply_to(message, "Хато. Мисол: /add_sale 123456789 50")
 
 def run_bot():
     bot.polling(none_stop=True)
