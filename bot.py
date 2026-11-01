@@ -86,7 +86,12 @@ def show_main_menu(chat_id, gender):
     elif gender == "phone":
         markup.add("📱 Телефонҳо", "📊 Ҳисоби ман", "🏆 Рейтинг", "📞 Тамос бо мо")
     else:
-        markup.add("👗 Либосҳои занона", "👕 Либосҳои мардона", "👟 Пойафзоли занона", "👞 Пойафзоли мардона", "👜 Сумкаҳо", "💄 Косметика", "🧴 Дигар чизҳо", "🌿 Табиӣ ва Дору", "📊 Ҳисоби ман", "🏆 Рейтинг", "📞 Тамос бо мо")
+    markup.add("👗 Либосҳои занона", "👕 Либосҳои мардона")
+    markup.add("👜 Пойафзоли занона", "👞 Пойафзоли мардона")
+    markup.add("🛍 Сумкаҳо", "📱 Телефонҳо")
+    markup.add("🔌 Асбобҳои рӯзғор", "🌿 Табиӣ ва Дору")
+    markup.add("📊 Ҳисоби ман", "🏆 Рейтинг")
+    markup.add("📞 Тамос бо мо")
     bot.send_message(chat_id, "🏠 Менюи асосӣ:", reply_markup=markup)
 
 @bot.message_handler(func=lambda m: user_states.get(m.chat.id, {}).get('state') == 'waiting_code')
