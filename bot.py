@@ -47,12 +47,13 @@ def health():
 @bot.message_handler(commands=['start'])
 def start(message):
     if str(message.from_user.id) == ADMIN_ID:
-       markup.add("➕ Иловаи моли нав", "📋 Рӯйхати молҳо")
-       markup.add("📊 Ҳисоботи фурӯшандагон", "🏆 Топ-фурӯшандагон")
-       markup.add("👥 Идоракунии фурӯшандагон", "🗑 Нест кардани мол")
-       markup.add("⚙️ Танзимоти фоизҳо") # <--- ИН САТРРО ИЛОВА КУНЕД
-       markup.add("🔙 Бозгашт ба меню")
-       bot.send_message(message.chat.id, "👑 ПАНЕЛИ АДМИН:", reply_markup=markup)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        markup.add("➕ Иловаи моли нав", "📋 Рӯйхати молҳо")
+        markup.add("📊 Ҳисоботи фурӯшандагон", "🏆 Топ-фурӯшандагон")
+        markup.add("👥 Идоракунии фурӯшандагон", "🗑 Нест кардани мол")
+        markup.add("⚙️ Танзимоти фоизҳо")
+        markup.add("🔙 Бозгашт ба меню")
+        bot.send_message(message.chat.id, "👑 ПАНЕЛИ АДМИН:", reply_markup=markup)
     else:
         user_states[message.chat.id] = {'state': 'waiting_name'}
         bot.send_message(message.chat.id, "Ассалому алайкум! Хуш омадед.\n\nЛутфан, ному насаби худро нависед:")
