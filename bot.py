@@ -51,7 +51,7 @@ def start(message):
         markup.add("➕ Иловаи моли нав", "📋 Рӯйхати молҳо")
         markup.add("📊 Ҳисоботи фурӯшандагон", "🏆 Топ-фурӯшандагон")
         markup.add("👥 Идоракунии фурӯшандагон", "🗑 Нест кардани мол")
-        markup.add("⚙️ Танзимоти фоизҳо")
+        markup.add("⚙️ Танзимоти фоизҳо", "💼 Иваз кардани баланс")
         markup.add("🔙 Бозгашт ба меню")
         bot.send_message(message.chat.id, "👑 ПАНЕЛИ АДМИН:", reply_markup=markup)
     else:
@@ -138,9 +138,11 @@ def admin_panel(message):
     if str(message.chat.id) != ADMIN_ID:
         return
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    markup.add("➕ Иловаи моли нав", "📋 Рӯйхати молҳо", "📊 Ҳисоботи фурӯшандагон", "🏆 Топ-фурӯшандагон", "👥 Идоракунии фурӯшандагон", "🗑 Нест кардани мол", "⬅️ Бозгашт ба меню")
+    markup.add("➕ Иловаи моли нав", "📋 Рӯйхати молҳо")
+    markup.add("📊 Ҳисоботи фурӯшандагон", "🏆 Топ-фурӯшандагон")
+    markup.add("👥 Идоракунии фурӯшандагон", "🗑 Нест кардани мол")
+    markup.add("💼 Иваз кардани баланс") 
     bot.send_message(message.chat.id, "👑 ПАНЕЛИ АДМИН:", reply_markup=markup)
-
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "👥 Идоракунии фурӯшандагон")
 def manage_sellers(message):
     conn = get_db()
