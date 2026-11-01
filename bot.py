@@ -553,16 +553,27 @@ def save_new_balance(message):
         
         conn = get_db()
         cursor = conn.cursor()
+        # Кӯшиши навсозии баланс
         cursor.execute("UPDATE sellers SET balance = %s WHERE user_id = %s", (new_balance, seller_id))
-        conn.commit()
+        
+        # 🚨 Тафтиши муҳим: Оё чунин ID дар база буд?
+        if cursor.rowcount == 0:
+            bot.send_message(message.chat.id, f"❌ Фурӯшанда бо ID {seller_id} дар база ёфт нашуд!\nЛутфан ID-и дурустро нависед.")
+        else:
+            conn.commit()
+            bot.send_message(message.chat.id, f"✅ Баланси фурӯшанда бо ID {seller_id} ба {new_balance} сомонӣ иваз шуд!")
+        
         cursor.close()
         conn.close()
         
+        # Ба ҳолати муқаррарӣ бармегардонем
         user_states[message.chat.id]['state'] = 'authorized'
-        bot.send_message(message.chat.id, f"✅ Баланси фурӯшанда бо ID {seller_id} ба {new_balance} сомонӣ иваз шуд!")
         
-    except ValueError:
-        bot.send_message(message.chat.id, "❌ Хато! Лутфан рақами дурустро нависед.")
+    except Exception as e:
+        # Ин ҳама хатоҳоро мегирад, то бот хомӯш нашавад
+        print(f"Хатои save_balance: {e}")
+        bot.send_message(message.chat.id, f"❌ Хатои техникӣ: {e}")
+        user_states[message.chat.id]['state'] = 'authorized'
 def run_bot():
     bot.polling(none_stop=True)
 
