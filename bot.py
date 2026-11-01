@@ -530,6 +530,39 @@ def save_percent(message):
     except Exception:
         bot.send_message(message.chat.id, "❌ Хато! Лутфан танҳо рақами аз 0 то 100 нависед (мисол: 75).")
 
+@bot.message_handler(func=lambda message: message.text == "💼 Иваз кардани баланс" and str(message.chat.id) == ADMIN_ID)
+def ask_balance_id(message):
+    user_states[message.chat.id] = {'state': 'waiting_balance_id'}
+    bot.send_message(message.chat.id, "🆔 ID-и фурӯшандаро нависед (мисол: 6367413561):")
+
+@bot.message_handler(func=lambda message: user_states.get(message.chat.id, {}).get('state') == 'waiting_balance_id')
+def ask_balance_amount(message):
+    try:
+        seller_id = int(message.text)
+        user_states[message.chat.id]['balance_seller_id'] = seller_id
+        user_states[message.chat.id]['state'] = 'waiting_balance_amount'
+        bot.send_message(message.chat.id, "💰 Баланси навро нависед (мисол: 0 ё 50):")
+    except ValueError:
+        bot.send_message(message.chat.id, "❌ Хато! Лутфан танҳо рақам нависед.")
+
+@bot.message_handler(func=lambda message: user_states.get(message.chat.id, {}).get('state') == 'waiting_balance_amount')
+def save_new_balance(message):
+    try:
+        new_balance = float(message.text)
+        seller_id = user_states[message.chat.id]['balance_seller_id']
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE sellers SET balance = %s WHERE user_id = %s", (new_balance, seller_id))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        user_states[message.chat.id]['state'] = 'authorized'
+        bot.send_message(message.chat.id, f"✅ Баланси фурӯшанда бо ID {seller_id} ба {new_balance} сомонӣ иваз шуд!")
+        
+    except ValueError:
+        bot.send_message(message.chat.id, "❌ Хато! Лутфан рақами дурустро нависед.")
 def run_bot():
     bot.polling(none_stop=True)
 
