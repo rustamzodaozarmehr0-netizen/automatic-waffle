@@ -170,22 +170,31 @@ def delete_seller_callback(call):
     bot.answer_callback_query(call.id, "✅ Нест карда шуд!")
     bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="✅ Фурӯшанда нест карда шуд.", reply_markup=None)
 
-@bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "📊 Ҳисоботи фурӯшандагон")
+@bot.message_handler(func=lambda message: message.text == "📊 Ҳисоботи фурӯшандагон" and str(message.chat.id) == ADMIN_ID)
 def admin_seller_report(message):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('SELECT name, phone, total_sales, total_earned FROM sellers')
+    # user_id-ро ба SQL илова кардем
+    cursor.execute("SELECT user_id, name, phone, total_sales, total_earned FROM sellers")
     sellers = cursor.fetchall()
     cursor.close()
     conn.close()
+    
     if not sellers:
         bot.send_message(message.chat.id, "Ҳоло фурӯшандагон нест.")
         return
-    text = "📊 <b>ҲИСОБОТ:</b>\n"
+        
+    text = "📊 <b>ҲИСОБОТ:</b>\n\n"
     for s in sellers:
-        text += f"👤 <b>{s[0]}</b> ({s[1]})\n🛍 {s[2]} фурӯш | 💰 {s[3]}с\n➖➖➖➖\n"
+        # s[0] - ID, s[1] - Ном, s[2] - Телефон, s[3] - Фурӯш, s[4] - Даромад
+        text += f"👤 {s[1]}\n"
+        text += f"📱 {s[2]}\n"
+        text += f"🆔 ID: <code>{s[0]}</code>\n" # Ин ҷо ID-ро нишон медиҳем
+        text += f"🛍 {s[3]} фурӯш | 💰 {s[4]}с\n"
+        text += "---\n"
+        
     bot.send_message(message.chat.id, text, parse_mode='HTML')
-
+   
 @bot.message_handler(func=lambda message: str(message.chat.id) == ADMIN_ID and message.text == "🏆 Топ-фурӯшандагон")
 def admin_top_sellers(message):
     conn = get_db()
