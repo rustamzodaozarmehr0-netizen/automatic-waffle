@@ -478,7 +478,7 @@ def admin_add_sale(message):
             cursor.close()
             conn.close()
             
-            bot.reply_to(message, f"✅ Сабт шуд!\nФурӯшанда {seller_earned} сомонӣ фоида гирифт.")
+    bot.reply_to(message, f"✅ Сабт шуд!\nФурӯшанда {seller_earned} сомонӣ фоида гирифт.")
             
 except Exception as e:
     print(f"Хатои add_sale: {e}") # <--- Ин сатрро илова кунед
