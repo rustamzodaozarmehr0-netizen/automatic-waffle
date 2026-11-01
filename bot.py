@@ -52,7 +52,7 @@ def start(message):
        markup.add("👥 Идоракунии фурӯшандагон", "🗑 Нест кардани мол")
        markup.add("⚙️ Танзимоти фоизҳо") # <--- ИН САТРРО ИЛОВА КУНЕД
        markup.add("🔙 Бозгашт ба меню")
-        bot.send_message(message.chat.id, "👑 ПАНЕЛИ АДМИН:", reply_markup=markup)
+       bot.send_message(message.chat.id, "👑 ПАНЕЛИ АДМИН:", reply_markup=markup)
     else:
         user_states[message.chat.id] = {'state': 'waiting_name'}
         bot.send_message(message.chat.id, "Ассалому алайкум! Хуш омадед.\n\nЛутфан, ному насаби худро нависед:")
